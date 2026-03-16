@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Оцінка 360° | Компетенції</title>
+<title>Оцінка 360°</title>
 <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -18,221 +18,162 @@
     --text3: #9ca3af;
     --success: #059669;
     --danger: #dc2626;
-    --radius: 12px;
-    --radius-lg: 20px;
+    --r: 12px; --rl: 20px;
   }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Geologica',sans-serif; min-height:100vh; }
+  .app { max-width:760px; margin:0 auto; padding:24px 20px 80px; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* Header */
+  .header { display:flex; align-items:center; gap:14px; padding:22px 0 26px; border-bottom:1px solid var(--border); margin-bottom:28px; }
+  .logo { width:40px; height:40px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; color:#fff; flex-shrink:0; box-shadow:0 4px 12px rgba(37,99,235,.2); }
+  .header-info h1 { font-size:16px; font-weight:600; }
+  .header-info p { font-size:12px; color:var(--text2); margin-top:2px; }
+  .badge { margin-left:auto; padding:4px 12px; border-radius:100px; font-size:12px; font-weight:600; flex-shrink:0; }
+  .badge.manager    { background:#fef3c7; color:#92400e; }
+  .badge.colleague  { background:#dbeafe; color:#1e40af; }
+  .badge.subordinate{ background:#d1fae5; color:#065f46; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Geologica', sans-serif;
-    min-height: 100vh;
+  /* Screens */
+  .screen { display:none; animation:fadeUp .3s ease; }
+  .screen.active { display:block; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--rl); padding:26px 30px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+  .card h2 { font-size:21px; font-weight:700; letter-spacing:-.4px; margin-bottom:10px; }
+  .card p { color:var(--text2); font-size:14px; line-height:1.7; }
+  .emp-chip { display:inline-flex; align-items:center; gap:6px; margin-top:14px; padding:7px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; font-size:13px; color:var(--text2); }
+  .emp-chip strong { color:var(--accent); font-weight:600; }
+
+  .rules { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:20px 26px; margin-bottom:18px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+  .rules-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text3); font-family:'JetBrains Mono',monospace; margin-bottom:12px; }
+  .rule { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
+  .rule:last-child { border-bottom:none; }
+  .ri { font-size:15px; flex-shrink:0; }
+  .rt { font-size:13px; color:var(--text2); line-height:1.55; }
+
+  /* Progress */
+  .prog-wrap { margin-bottom:22px; }
+  .prog-meta { display:flex; justify-content:space-between; margin-bottom:7px; font-size:12px; color:var(--text2); }
+  .prog-meta span:last-child { font-family:'JetBrains Mono',monospace; color:var(--accent); font-weight:500; }
+  .prog-bar { height:5px; background:var(--border); border-radius:100px; overflow:hidden; }
+  .prog-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:100px; transition:width .5s ease; }
+
+  /* Competency header */
+  .comp-hd { display:flex; align-items:center; gap:12px; padding:16px 22px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+  .comp-num { width:32px; height:32px; border-radius:7px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+  .comp-grp { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--text3); font-family:'JetBrains Mono',monospace; margin-bottom:2px; }
+  .comp-nm { font-size:16px; font-weight:600; letter-spacing:-.3px; }
+
+  .instr { background:#eff6ff; border:1px solid #bfdbfe; border-radius:9px; padding:12px 16px; font-size:13px; color:#1e40af; margin-bottom:14px; line-height:1.5; }
+
+  /* Level group */
+  .level-group { margin-bottom:12px; }
+  .level-label {
+    display:flex; align-items:center; gap:8px;
+    padding:6px 14px; margin-bottom:6px;
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.8px;
+    color:var(--text3); font-family:'JetBrains Mono',monospace;
+    border-left: 3px solid var(--border);
   }
-
-  .app { max-width: 760px; margin: 0 auto; padding: 24px 20px 80px; }
-
-  .header {
-    display: flex; align-items: center; gap: 14px;
-    padding: 24px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 32px;
+  .level-label .lnum {
+    width:20px; height:20px; border-radius:5px;
+    background:var(--surface2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:var(--text3);
   }
+  .level-group.has-selected .level-label { color:var(--accent); border-left-color:var(--accent); }
+  .level-group.has-selected .lnum { background:rgba(37,99,235,.1); border-color:var(--accent); color:var(--accent); }
 
-  .logo {
-    width: 42px; height: 42px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 10px; display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: #fff; flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+  /* Statement card */
+  .stmts { display:flex; flex-direction:column; gap:7px; padding-left:8px; }
+
+  .stmt-card {
+    display:flex; align-items:flex-start; gap:12px;
+    background:var(--surface); border:1.5px solid var(--border); border-radius:10px;
+    padding:13px 16px; cursor:pointer; transition:all .17s; user-select:none;
+    box-shadow:0 1px 3px rgba(0,0,0,.03);
   }
+  .stmt-card:hover { border-color:#93c5fd; background:#f8faff; transform:translateX(2px); }
+  .stmt-card.selected { border-color:var(--accent); background:#eff6ff; transform:translateX(2px); }
 
-  .header-info h1 { font-size: 17px; font-weight: 600; }
-  .header-info p { font-size: 13px; color: var(--text2); margin-top: 2px; }
-
-  .badge {
-    margin-left: auto; padding: 5px 13px; border-radius: 100px;
-    font-size: 12px; font-weight: 600; flex-shrink: 0;
+  .stmt-check {
+    width:20px; height:20px; border-radius:5px;
+    border:1.5px solid var(--border); background:var(--surface2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; flex-shrink:0; margin-top:1px; transition:all .17s;
+    color:transparent;
   }
-  .badge.manager    { background: #fef3c7; color: #92400e; }
-  .badge.colleague  { background: #dbeafe; color: #1e40af; }
-  .badge.subordinate{ background: #d1fae5; color: #065f46; }
+  .stmt-card.selected .stmt-check { border-color:var(--accent); background:var(--accent); color:#fff; }
 
-  .screen { display: none; animation: fadeUp 0.35s ease; }
-  .screen.active { display: block; }
+  .stmt-text { font-size:13.5px; color:var(--text2); line-height:1.6; flex:1; }
+  .stmt-card.selected .stmt-text { color:var(--text); }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  /* Comment */
+  .cmt-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:16px 18px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.04); margin-top:4px; }
+  .cmt-wrap label { font-size:12px; color:var(--text2); display:block; margin-bottom:7px; }
+  .cmt-wrap textarea { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 13px; color:var(--text); font-family:'Geologica',sans-serif; font-size:13px; resize:vertical; min-height:68px; outline:none; transition:border-color .2s; }
+  .cmt-wrap textarea:focus { border-color:var(--accent); }
+  .cmt-wrap textarea::placeholder { color:var(--text3); }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 16px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  }
-  .card h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 10px; }
-  .card p { color: var(--text2); font-size: 15px; line-height: 1.7; }
+  .err-msg { background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:9px 13px; font-size:13px; color:var(--danger); margin-bottom:12px; display:none; }
 
-  .employee-chip {
-    display: inline-flex; align-items: center; gap: 7px;
-    margin-top: 16px; padding: 8px 16px;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-    font-size: 14px; color: var(--text2);
-  }
-  .employee-chip strong { color: var(--accent); font-weight: 600; }
+  /* Nav */
+  .nav { display:flex; justify-content:space-between; align-items:center; padding-top:18px; border-top:1px solid var(--border); margin-top:6px; }
+  .btn { padding:10px 24px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; border:none; font-family:'Geologica',sans-serif; transition:all .17s; }
+  .btn-primary { background:var(--accent); color:#fff; box-shadow:0 3px 10px rgba(37,99,235,.22); }
+  .btn-primary:hover { background:#1d4ed8; transform:translateY(-1px); }
+  .btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+  .btn-ghost:hover { background:var(--surface2); color:var(--text); }
+  .btn-success { background:var(--success); color:#fff; box-shadow:0 3px 10px rgba(5,150,105,.22); }
+  .btn-success:hover { background:#047857; transform:translateY(-1px); }
 
-  .rules {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 22px 28px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  }
-  .rules-title {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
-    color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-bottom: 14px;
-  }
-  .rule { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
-  .rule:last-child { border-bottom: none; }
-  .rule-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
-  .rule-text { font-size: 14px; color: var(--text2); line-height: 1.55; }
+  /* Summary */
+  .sum-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .stat-lbl { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text3); font-family:'JetBrains Mono',monospace; margin-bottom:5px; }
+  .stat-val { font-size:26px; font-weight:700; color:var(--accent); font-family:'JetBrains Mono',monospace; }
+  .stat-sub { font-size:11px; color:var(--text3); margin-top:2px; }
 
-  .progress-wrap { margin-bottom: 24px; }
-  .progress-meta { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--text2); }
-  .progress-meta span:last-child { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-weight: 500; }
-  .progress-bar { height: 5px; background: var(--border); border-radius: 100px; overflow: hidden; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 100px; transition: width 0.5s ease; }
+  .scores-list { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .score-row { display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--border); }
+  .score-row:last-child { border-bottom:none; }
+  .score-nm { flex:1; font-size:13px; color:var(--text2); }
+  .score-sel { font-size:11px; color:var(--text3); font-family:'JetBrains Mono',monospace; white-space:nowrap; }
+  .score-bar-w { width:80px; height:5px; background:var(--border); border-radius:100px; overflow:hidden; flex-shrink:0; }
+  .score-bar-f { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:100px; }
+  .score-num { font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; color:var(--accent); width:30px; text-align:right; }
 
-  .comp-header {
-    display: flex; align-items: center; gap: 14px;
-    padding: 18px 24px; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  }
-  .comp-num {
-    width: 34px; height: 34px; border-radius: 8px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff; display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; flex-shrink: 0;
-  }
-  .comp-group { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-bottom: 3px; }
-  .comp-name { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  /* Thank you */
+  .ty { text-align:center; padding:60px 20px; }
+  .ty-icon { width:68px; height:68px; border-radius:50%; background:#d1fae5; border:2px solid #6ee7b7; display:flex; align-items:center; justify-content:center; font-size:30px; margin:0 auto 22px; animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(5,150,105,.2)} 50%{box-shadow:0 0 0 12px rgba(5,150,105,0)} }
+  .ty h2 { font-size:24px; font-weight:700; margin-bottom:10px; }
+  .ty p { color:var(--text2); font-size:14px; line-height:1.7; max-width:380px; margin:0 auto; }
 
-  .instruction {
-    background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px;
-    padding: 13px 18px; font-size: 13px; color: #1e40af; margin-bottom: 16px; line-height: 1.55;
-  }
+  /* Error screen */
+  .err-sc { text-align:center; padding:80px 20px; }
+  .err-sc h2 { font-size:19px; color:var(--danger); margin-bottom:10px; }
+  .err-sc p { color:var(--text2); font-size:13px; line-height:1.7; }
+  .err-sc code { display:inline-block; margin-top:12px; padding:7px 13px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text2); }
 
-  .options-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+  /* Loading */
+  .loader { display:none; position:fixed; inset:0; background:rgba(242,245,251,.88); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+  .loader.active { display:flex; }
+  .spinner { width:34px; height:34px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loader-txt { font-size:13px; color:var(--text2); }
 
-  .option-card {
-    background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
-    padding: 16px 20px; cursor: pointer; transition: all 0.18s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04); user-select: none;
-  }
-  .option-card:hover { border-color: #93c5fd; background: #f8faff; transform: translateX(3px); }
-  .option-card.selected { border-color: var(--accent); background: #eff6ff; transform: translateX(3px); }
-
-  .option-header { display: flex; align-items: flex-start; gap: 12px; }
-
-  .option-score {
-    width: 28px; height: 28px; border-radius: 6px;
-    border: 1.5px solid var(--border); background: var(--surface2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
-    color: var(--text3); flex-shrink: 0; transition: all 0.18s; margin-top: 1px;
-  }
-  .option-card.selected .option-score { border-color: var(--accent); background: var(--accent); color: #fff; }
-
-  .option-text { font-size: 14px; color: var(--text2); line-height: 1.6; flex: 1; }
-  .option-card.selected .option-text { color: var(--text); }
-
-  .option-check {
-    width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border);
-    background: var(--surface); flex-shrink: 0; display: flex; align-items: center;
-    justify-content: center; font-size: 11px; transition: all 0.18s; margin-top: 2px;
-  }
-  .option-card.selected .option-check { border-color: var(--accent); background: var(--accent); color: #fff; }
-
-  .multi-hint { font-size: 12px; color: var(--text3); text-align: center; padding: 6px; font-style: italic; margin-bottom: 8px; }
-
-  .comment-wrap {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  .comment-wrap label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 8px; }
-  .comment-wrap textarea {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-    padding: 11px 14px; color: var(--text); font-family: 'Geologica', sans-serif; font-size: 14px;
-    resize: vertical; min-height: 72px; outline: none; transition: border-color 0.2s;
-  }
-  .comment-wrap textarea:focus { border-color: var(--accent); }
-  .comment-wrap textarea::placeholder { color: var(--text3); }
-
-  .error-msg {
-    background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
-    padding: 10px 14px; font-size: 13px; color: var(--danger); margin-bottom: 14px; display: none;
-  }
-
-  .nav {
-    display: flex; justify-content: space-between; align-items: center;
-    padding-top: 20px; border-top: 1px solid var(--border); margin-top: 8px;
-  }
-
-  .btn {
-    padding: 11px 26px; border-radius: 10px; font-size: 14px; font-weight: 600;
-    cursor: pointer; border: none; font-family: 'Geologica', sans-serif;
-    transition: all 0.18s; letter-spacing: -0.2px;
-  }
-  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 3px 12px rgba(37,99,235,0.25); }
-  .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 5px 16px rgba(37,99,235,0.35); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
-  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
-  .btn-success { background: var(--success); color: #fff; box-shadow: 0 3px 12px rgba(5,150,105,0.25); }
-  .btn-success:hover { background: #047857; transform: translateY(-1px); }
-
-  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
-  .stat-val { font-size: 26px; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
-  .stat-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
-
-  .scores-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .score-row { display: flex; align-items: center; gap: 14px; padding: 13px 20px; border-bottom: 1px solid var(--border); }
-  .score-row:last-child { border-bottom: none; }
-  .score-name { flex: 1; font-size: 14px; color: var(--text2); }
-  .score-sel { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
-  .score-bar-wrap { width: 90px; height: 5px; background: var(--border); border-radius: 100px; overflow: hidden; flex-shrink: 0; }
-  .score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 100px; }
-  .score-num { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: var(--accent); width: 32px; text-align: right; }
-
-  .thankyou { text-align: center; padding: 60px 20px; }
-  .ty-icon { width: 72px; height: 72px; border-radius: 50%; background: #d1fae5; border: 2px solid #6ee7b7; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 24px; animation: pulse 2s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(5,150,105,0.2); } 50% { box-shadow: 0 0 0 14px rgba(5,150,105,0); } }
-  .thankyou h2 { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
-  .thankyou p { color: var(--text2); font-size: 15px; line-height: 1.7; max-width: 400px; margin: 0 auto; }
-
-  .error-screen { text-align: center; padding: 80px 20px; }
-  .error-screen h2 { font-size: 20px; color: var(--danger); margin-bottom: 10px; }
-  .error-screen p { color: var(--text2); font-size: 14px; line-height: 1.7; }
-  .error-screen code { display: inline-block; margin-top: 14px; padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
-
-  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(242,245,251,0.88); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
-  .loading-overlay.active { display: flex; }
-  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 14px; color: var(--text2); }
-
-  @media (max-width: 520px) {
-    .summary-grid { grid-template-columns: 1fr; }
-    .card { padding: 20px; }
-    .score-bar-wrap { display: none; }
+  @media(max-width:520px) {
+    .sum-grid { grid-template-columns:1fr; }
+    .card { padding:18px; }
+    .score-bar-w { display:none; }
   }
 </style>
 </head>
 <body>
 
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div class="loading-text">Збереження відповідей...</div>
-</div>
+<div class="loader" id="loader"><div class="spinner"></div><div class="loader-txt">Збереження...</div></div>
 
 <div class="app">
   <header class="header">
@@ -244,58 +185,60 @@
     <span class="badge" id="roleBadge"></span>
   </header>
 
+  <!-- Error -->
   <div class="screen active" id="screenError">
-    <div class="error-screen">
+    <div class="err-sc">
       <h2>⚠ Невірне посилання</h2>
-      <p>Для відкриття опитування необхідне коректне посилання з параметрами.<br>Зверніться до координатора опитування.</p>
+      <p>Для відкриття опитування необхідне коректне посилання з параметрами.<br>Зверніться до координатора.</p>
       <br><code>?employee=Прізвище&role=colleague</code>
     </div>
   </div>
 
+  <!-- Intro -->
   <div class="screen" id="screenIntro">
     <div class="card">
       <h2>Оцінка компетенцій</h2>
-      <p>Вас запрошено взяти участь в оцінці 360°. Оберіть поведінкові описи, які найточніше характеризують цього співробітника.</p>
-      <div class="employee-chip">👤 Оцінюєте: <strong id="employeeName">—</strong></div>
+      <p>Вас запрошено взяти участь в оцінці 360°. Відмітьте твердження, які найточніше описують поведінку цього співробітника.</p>
+      <div class="emp-chip">👤 Оцінюєте: <strong id="employeeName">—</strong></div>
     </div>
     <div class="rules">
-      <div class="rules-title">Як проходити опитування</div>
-      <div class="rule"><span class="rule-icon">🔒</span><div class="rule-text">Ваші відповіді <strong>анонімні</strong>. Індивідуальні оцінки не розкриваються.</div></div>
-      <div class="rule"><span class="rule-icon">☑️</span><div class="rule-text">По кожній компетенції оберіть <strong>один або кілька описів</strong>, що найкраще відповідають реальній поведінці співробітника. Підсумкова оцінка — середнє обраних рівнів.</div></div>
-      <div class="rule"><span class="rule-icon">🎯</span><div class="rule-text">Оцінюйте <strong>реальну поведінку</strong>, яку спостерігаєте, а не ідеальний образ.</div></div>
-      <div class="rule"><span class="rule-icon">⏱</span><div class="rule-text">Орієнтовний час: <strong>10–15 хвилин</strong>.</div></div>
+      <div class="rules-title">Як проходити</div>
+      <div class="rule"><span class="ri">🔒</span><div class="rt">Ваші відповіді <strong>анонімні</strong>. Індивідуальні оцінки не розкриваються.</div></div>
+      <div class="rule"><span class="ri">☑️</span><div class="rt">По кожній компетенції відмітьте <strong>всі твердження</strong>, які відповідають реальній поведінці співробітника. Бал визначається автоматично на основі вибору.</div></div>
+      <div class="rule"><span class="ri">🎯</span><div class="rt">Оцінюйте <strong>реальну поведінку</strong>, яку спостерігаєте, а не ідеальний образ.</div></div>
+      <div class="rule"><span class="ri">⏱</span><div class="rt">Орієнтовний час: <strong>10–15 хвилин</strong>.</div></div>
     </div>
-    <button class="btn btn-primary" onclick="startSurvey()" style="width:100%;padding:14px">Розпочати оцінку →</button>
+    <button class="btn btn-primary" onclick="startSurvey()" style="width:100%;padding:13px">Розпочати оцінку →</button>
   </div>
 
+  <!-- Survey -->
   <div class="screen" id="screenSurvey">
-    <div class="progress-wrap">
-      <div class="progress-meta">
-        <span id="progressLabel">Компетенція 1 з 10</span>
-        <span id="progressCounter">0 / 10</span>
+    <div class="prog-wrap">
+      <div class="prog-meta">
+        <span id="progLabel">Компетенція 1 з 10</span>
+        <span id="progCounter">0 / 10</span>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
     </div>
 
-    <div class="comp-header">
+    <div class="comp-hd">
       <div class="comp-num" id="compNum">1</div>
       <div>
-        <div class="comp-group" id="compGroup">УПРАВЛІНСЬКІ КОМПЕТЕНЦІЇ</div>
-        <div class="comp-name" id="compName">—</div>
+        <div class="comp-grp" id="compGrp">УПРАВЛІНСЬКІ КОМПЕТЕНЦІЇ</div>
+        <div class="comp-nm" id="compNm">—</div>
       </div>
     </div>
 
-    <div class="instruction">☑ Оберіть один або декілька описів, що найточніше відповідають поведінці цього співробітника. Підсумкова оцінка — середнє арифметичне обраних рівнів.</div>
+    <div class="instr">☑ Відмітьте всі твердження, які відповідають реальній поведінці співробітника. Підсумковий бал — середнє по відміченим рівням.</div>
 
-    <div class="options-list" id="optionsList"></div>
-    <div class="multi-hint">Можна обрати кілька варіантів одночасно</div>
+    <div id="stmtsContainer"></div>
 
-    <div class="comment-wrap">
+    <div class="cmt-wrap">
       <label>💬 Коментар <span style="color:var(--text3)">(необов'язково)</span></label>
-      <textarea id="currentComment" placeholder="Наведіть конкретний приклад поведінки..."></textarea>
+      <textarea id="curComment" placeholder="Наведіть конкретний приклад..."></textarea>
     </div>
 
-    <div class="error-msg" id="errorMsg">Оберіть хоча б один варіант перед тим як продовжити.</div>
+    <div class="err-msg" id="errMsg">Відмітьте хоча б одне твердження перед тим як продовжити.</div>
 
     <div class="nav">
       <button class="btn btn-ghost" id="btnBack" onclick="goBack()">← Назад</button>
@@ -303,24 +246,26 @@
     </div>
   </div>
 
+  <!-- Summary -->
   <div class="screen" id="screenSummary">
     <div class="card">
       <h2>Перевірте відповіді</h2>
       <p>Огляньте результати перед відправкою. Після підтвердження змінити відповіді неможливо.</p>
     </div>
-    <div class="summary-grid">
-      <div class="stat-card"><div class="stat-label">Компетенцій</div><div class="stat-val" id="totalComp">10</div><div class="stat-sub">оцінено</div></div>
-      <div class="stat-card"><div class="stat-label">Середня оцінка</div><div class="stat-val" id="avgScore">—</div><div class="stat-sub">з 5 балів</div></div>
+    <div class="sum-grid">
+      <div class="stat-card"><div class="stat-lbl">Компетенцій</div><div class="stat-val" id="totalComp">10</div><div class="stat-sub">оцінено</div></div>
+      <div class="stat-card"><div class="stat-lbl">Середня оцінка</div><div class="stat-val" id="avgScore">—</div><div class="stat-sub">з 5 балів</div></div>
     </div>
     <div class="scores-list" id="scoresList"></div>
     <div class="nav">
-      <button class="btn btn-ghost" onclick="showScreen('screenSurvey'); currentStep = COMPETENCIES.length-1; renderStep()">← Редагувати</button>
+      <button class="btn btn-ghost" onclick="showScreen('screenSurvey');currentStep=COMPETENCIES.length-1;renderStep()">← Редагувати</button>
       <button class="btn btn-success" onclick="submitSurvey()">✓ Відправити оцінку</button>
     </div>
   </div>
 
+  <!-- Thanks -->
   <div class="screen" id="screenThanks">
-    <div class="thankyou">
+    <div class="ty">
       <div class="ty-icon">✓</div>
       <h2>Дякуємо!</h2>
       <p>Ваші відповіді успішно збережено і будуть враховані при формуванні звіту 360°.</p>
@@ -331,193 +276,209 @@
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbzN16CbMjC_p6eNzwkN9Skjmi-tCr1-JcoGF9IsQFZec83I_ds4Ngdp2fiMCOl1eTNQ/exec';
 
+// Кожен рівень — масив тверджень. Бал рівня = індекс+1.
 const COMPETENCIES = [
   { id:'risk', group:'Управлінські компетенції', name:'Управління ризиками', levels:[
-    'Реагує на проблеми лише після їх виникнення. Не намагається передбачати ризики або аналізувати можливі наслідки рішень. Дії носять хаотичний та ситуативний характер, відповідальність за негативні наслідки часто пояснюється зовнішніми обставинами.',
-    'Іноді помічає ризики, але не працює з ними системно. Реагує переважно тоді, коли проблема вже почала впливати на результат. Рішення приймає інтуїтивно, без чіткої оцінки ймовірності та наслідків.',
-    'Визначає ключові ризики у своїй зоні відповідальності. Оцінює ймовірність і вплив ризиків. Має базові плани реагування. Залучає команду до обговорення ризиків.',
-    'Заздалегідь аналізує ризики та планує дії для їх мінімізації. Пріоритизує ризики та приймає зважені рішення в умовах невизначеності. Регулярно обговорює потенційні ризики з командою.',
-    'Системно працює з ризиками до їх реалізації. Формує культуру проактивного управління ризиками в команді. Планує превентивні дії та допомагає іншим керівникам мислити категоріями ризиків.'
+    ['Реагує на проблеми лише після їх виникнення.','Не намагається передбачати ризики або аналізувати можливі наслідки рішень.','Дії носять хаотичний та ситуативний характер, відповідальність за негативні наслідки часто пояснюється зовнішніми обставинами.'],
+    ['Іноді помічає ризики, але не працює з ними системно.','Реагує переважно тоді, коли проблема вже почала впливати на результат.','Рішення приймає інтуїтивно, без чіткої оцінки ймовірності та наслідків.'],
+    ['Визначає ключові ризики у своїй зоні відповідальності.','Оцінює ймовірність і вплив ризиків.','Має базові плани реагування.','Залучає команду до обговорення ризиків.'],
+    ['Заздалегідь аналізує ризики та планує дії для їх мінімізації.','Пріоритизує ризики та приймає зважені рішення в умовах невизначеності.','Регулярно обговорює потенційні ризики з командою.'],
+    ['Системно працює з ризиками до їх реалізації. Формує культуру проактивного управління ризиками в команді, де потенційні проблеми ідентифікуються завчасно. Планує превентивні дії та допомагає іншим керівникам мислити категоріями ризиків.']
   ]},
   { id:'time', group:'Управлінські компетенції', name:'Управління часом', levels:[
-    'Працює у режимі постійної терміновості та «гасіння пожеж». Не планує робочий час і задачі, реагує лише на поточні проблеми. Часто не дотримується строків та не розставляє пріоритети.',
-    'Іноді намагається планувати свою роботу, але системності у плануванні немає. Часто перевантажений операційною роботою та не встигає виконувати задачі у встановлені строки.',
-    'Планує робочий час і задачі. Розрізняє важливе та термінове. У більшості випадків дотримується дедлайнів. Частково делегує задачі команді.',
-    'Регулярно застосовує інструменти планування. Використовує дані та аналітику для прийняття рішень. Сприяє оптимізації процесів у роботі команди.',
-    'Створює систему управління пріоритетами для себе і команди. Оптимально розподіляє навантаження без перевантаження. Формує простір для стратегічної роботи та розвитку команди.'
+    ['Працює у режимі постійної терміновості та «гасіння пожеж». Не планує робочий час і задачі, реагує лише на поточні проблеми. Часто не дотримується строків, губиться у великій кількості задач та не розставляє пріоритети. Значну частину часу витрачає на несуттєві або випадкові задачі.'],
+    ['Іноді намагається планувати свою роботу, але системності у плануванні немає. Часто перевантажений операційною роботою та не встигає виконувати задачі у встановлені строки. Пріоритети визначає ситуативно, через що важливі задачі можуть відкладатися.'],
+    ['Планує робочий час і задачі. Розрізняє важливе та термінове. У більшості випадків дотримується дедлайнів. Частково делегує задачі команді, але ще зберігає значну частину операційної роботи на собі.'],
+    ['Регулярно застосовує AI-інструменти у своїй управлінській діяльності. Використовує дані та аналітику для прийняття рішень. Сприяє впровадженню цифрових інструментів у роботі команди та оптимізації процесів.'],
+    ['Створює систему управління пріоритетами для себе і команди. Оптимально розподіляє навантаження, забезпечуючи стабільне виконання задач без перевантаження. Формує простір для стратегічної роботи, розвитку команди та довгострокових управлінських задач.']
   ]},
   { id:'digital', group:'Управлінські компетенції', name:'Цифрова компетентність', levels:[
-    'Не використовує AI-інструменти або цифрові рішення в управлінській роботі. Сприймає AI як «модний тренд». Приймає рішення переважно інтуїтивно, без аналізу даних.',
-    'Має загальне уявлення про можливості AI, але майже не використовує його у роботі. Іноді застосовує цифрові інструменти для окремих простих задач.',
-    'Використовує AI-інструменти для окремих задач (аналіз інформації, підготовка матеріалів, планування). Розуміє можливості та обмеження AI. Підтримує ініціативи з автоматизації.',
-    'Системно застосовує AI для прийняття управлінських рішень. Інтегрує AI-інструменти у роботу команди. Приймає рішення на основі даних і аналітики.',
-    'Системно інтегрує AI та цифрові інструменти у роботу команди. Формує культуру ефективного, усвідомленого та відповідального використання AI у команді.'
+    ['Не використовує AI-інструменти або інші цифрові рішення в управлінській роботі. Сприймає AI як «модний тренд», а не як робочий інструмент. Приймає рішення переважно інтуїтивно, без аналізу даних. Не проявляє інтересу до цифрових можливостей та не підтримує їх використання в команді.'],
+    ['Має загальне уявлення про можливості AI, але майже не використовує його у роботі. Іноді застосовує цифрові інструменти для окремих простих задач, але не інтегрує їх у робочі процеси. Команда не отримує від керівника стимулу до використання цифрових рішень.'],
+    ['Використовує AI-інструменти для окремих задач (аналіз інформації, підготовка матеріалів, планування). Розуміє можливості та обмеження AI. Частково інтегрує AI у власні управлінські процеси. Підтримує ініціативи з автоматизації та цифрових покращень.'],
+    ['Системно застосовує AI для прийняття управлінських рішень.','Інтегрує AI-інструменти у роботу команди та процеси.','Приймає рішення на основі даних і аналітики.','Формує культуру ефективного та відповідального використання AI.'],
+    ['Системно інтегрує AI та цифрові інструменти у роботу команди та управлінські процеси. Приймає управлінські рішення на основі даних і аналітики. Формує культуру ефективного, усвідомленого та відповідального використання AI у команді.']
   ]},
   { id:'strategic', group:'Управлінські компетенції', name:'Стратегічне мислення', levels:[
-    'Фокусується виключно на поточних задачах. Не аналізує довгострокові наслідки рішень. Діє реактивно. Не враховує контекст компанії та вплив своїх дій на інші підрозділи.',
-    'Іноді намагається оцінювати майбутні наслідки рішень, але робить це несистемно. Рідко виходить за межі своєї функції. Переважно мислить у короткостроковій перспективі.',
-    'Розуміє стратегічні цілі компанії. Пов\'язує свої рішення з середньостроковими наслідками. Аналізує кілька варіантів розвитку подій.',
-    'Мислить категоріями системи та розвитку компанії. Прогнозує наслідки управлінських рішень. Узгоджує дії своєї команди зі стратегією компанії.',
-    'Формує стратегічне бачення розвитку напрямку або підрозділу. Передбачає довгострокові наслідки рішень. Допомагає іншим керівникам мислити стратегічно.'
+    ['Фокусується виключно на поточних задачах. Не аналізує довгострокові наслідки своїх рішень. Діє реактивно, реагуючи лише на поточні проблеми. Не враховує контекст компанії та вплив своїх дій на інші підрозділи.'],
+    ['Іноді намагається оцінювати майбутні наслідки рішень, але робить це несистемно. Рідко виходить за межі своєї функції. Переважно мислить у короткостроковій перспективі.'],
+    ["Розуміє стратегічні цілі компанії. Пов'язує свої рішення з середньостроковими наслідками. Аналізує кілька варіантів розвитку подій. Частково виходить за межі своєї функції та враховує контекст компанії."],
+    ['Мислить категоріями системи та розвитку компанії. Прогнозує наслідки управлінських рішень. Узгоджує дії своєї команди зі стратегією компанії.'],
+    ['Формує стратегічне бачення розвитку напрямку або підрозділу. Передбачає довгострокові наслідки управлінських рішень. Допомагає іншим керівникам мислити стратегічно та транслює стратегічні пріоритети компанії.']
   ]},
   { id:'delegation', group:'Управлінські компетенції', name:'Делегування', levels:[
-    'Практично не делегує задачі. Бере більшість роботи на себе. Схильний до мікроменеджменту та постійного контролю. Не довіряє команді.',
-    'Іноді передає задачі команді, але залишає за собою більшість рішень та контролю. Делегує переважно прості або другорядні задачі.',
-    'Делегує частину задач команді. Формулює очікування та строки виконання. Контролює результати роботи. Поступово зменшує власну операційну участь.',
-    'Делегує задачі відповідно до рівня відповідальності співробітників. Передає не лише задачі, а й частину повноважень. Підтримує розвиток самостійності команди.',
-    'Будує систему ефективного делегування у команді. Свідомо розвиває компетентність і самостійність співробітників. Повністю виходить із мікроменеджменту.'
+    ['Практично не делегує задачі. Бере більшість роботи на себе. Схильний до мікроменеджменту та постійного контролю кожної дії підлеглих. Не довіряє команді та вважає, що швидше зробить сам.'],
+    ['Іноді передає задачі команді, але залишає за собою більшість рішень та контролю. Делегує переважно прості або другорядні задачі. Часто втручається у виконання та повертає задачі собі.'],
+    ['Делегує частину задач команді. Формулює очікування та строки виконання. Контролює результати роботи. Поступово зменшує власну операційну участь.'],
+    ['Делегує задачі відповідно до рівня відповідальності співробітників. Передає не лише задачі, а й частину повноважень. Підтримує розвиток самостійності та відповідальності команди.'],
+    ['Будує систему ефективного делегування у команді. Свідомо розвиває компетентність і самостійність співробітників. Повністю виходить із мікроменеджменту та фокусується на управлінні, розвитку людей і стратегічних задачах.']
   ]},
   { id:'resilience', group:'Управлінські компетенції', name:'Особиста стійкість керівника', levels:[
-    'Втрачає ефективність у стресових ситуаціях. Реагує емоційно та різко змінює поведінку під тиском. Передає напругу команді та погіршує робочу атмосферу.',
-    'У складних ситуаціях відчуває сильний стрес, який впливає на прийняття рішень. Іноді демонструє емоційні реакції. Після тривалого навантаження швидко виснажується.',
-    'Контролює емоції у більшості робочих ситуацій. Справляється зі стресом у знайомих умовах. Усвідомлює власні обмеження та частково використовує інструменти саморегуляції.',
-    'Зберігає ефективність у напружених ситуаціях. Усвідомлено керує своїм емоційним станом. Підтримує конструктивну атмосферу у команді навіть під тиском.',
-    'Залишається стабільним і ефективним у кризових умовах. Є емоційною та управлінською опорою для команди. Демонструє зрілу поведінку та допомагає іншим зберігати спокій у складних ситуаціях.'
+    ['Втрачає ефективність у стресових ситуаціях. Реагує емоційно та може різко змінювати поведінку під тиском. Передає напругу команді та погіршує робочу атмосферу.'],
+    ['У складних ситуаціях відчуває сильний стрес, який впливає на прийняття рішень. Іноді демонструє емоційні реакції. Після тривалого навантаження швидко виснажується.'],
+    ['Контролює емоції у більшості робочих ситуацій. Справляється зі стресом у знайомих умовах. Усвідомлює власні обмеження та частково використовує інструменти саморегуляції.'],
+    ['Зберігає ефективність у напружених ситуаціях. Усвідомлено керує своїм емоційним станом. Підтримує конструктивну атмосферу у команді навіть під тиском.'],
+    ['Залишається стабільним і ефективним у кризових умовах. Є емоційною та управлінською опорою для команди. Демонструє зрілу поведінку та допомагає іншим зберігати спокій і конструктивність у складних ситуаціях.']
   ]},
   { id:'responsibility', group:'Загальнокорпоративні компетенції', name:'Відповідальність', levels:[
-    'Обмежується відповідальністю лише за власну вузьку ділянку роботи. У складних ситуаціях схильний перекладати відповідальність на команду, обставини або інші підрозділи.',
-    'Формально відповідає за результат своєї функції, але не завжди доводить задачі до завершеного результату. Контроль виконання завдань нерегулярний.',
-    'Несе відповідальність за результат команди у межах своєї функції. Контролює виконання стратегічних та тактичних завдань. Виявляє ініціативу для виправлення помилок.',
-    'Бере відповідальність за результати команди та вплив своєї роботи на суміжні процеси. Допомагає команді доводити задачі до результату. Формує зрозумілі стандарти відповідальності.',
-    'Несе повну відповідальність за результати команди та міжфункціональних процесів. Формує культуру відповідальності у команді. Проактивно вирішує проблеми без зовнішнього тиску.'
+    ['Обмежується відповідальністю лише за власну вузьку ділянку роботи. У складних ситуаціях схильний перекладати відповідальність на команду, обставини або інші підрозділи. Не контролює виконання стратегічних рішень та не відстежує результатів роботи команди.'],
+    ['Формально відповідає за результат своєї функції, але не завжди доводить задачі до завершеного результату. Контроль виконання завдань нерегулярний. Питання відповідальності в команді не є системною управлінською практикою.'],
+    ['Несе відповідальність за результат команди у межах своєї функції. Контролює виконання стратегічних та тактичних завдань. Виявляє ініціативу для виправлення помилок та сприяє формуванню відповідальності у ключових співробітників.'],
+    ['Бере відповідальність за результати команди та вплив своєї роботи на суміжні процеси. Регулярно контролює виконання ключових рішень та допомагає команді доводити задачі до результату. Поступово формує у команді зрозумілі стандарти відповідальності.'],
+    ['Несе повну відповідальність за результати команди та міжфункціональних процесів. Формує стандарти і культуру відповідальності у команді. Розвиває співробітників так, щоб вони брали на себе відповідальність за результат. Проактивно вирішує проблеми та наслідки рішень без зовнішнього тиску.']
   ]},
   { id:'engagement', group:'Загальнокорпоративні компетенції', name:'Залученість', levels:[
-    'Уникає активної участі у стратегічних або важливих робочих процесах. Формально присутній на зустрічах, але практично не впливає на результат.',
-    'Іноді бере участь у ключових процесах, але переважно виконує роль спостерігача. Рідко проявляє ініціативу у важливих обговореннях.',
-    'Регулярно бере участь у ключових процесах і проєктах. Залучає команду до обговорення важливих рішень. Показує приклад відповідальності та участі для підлеглих.',
-    'Активно бере участь у стратегічних та міжфункціональних процесах. Створює умови, щоб команда була залучена до прийняття важливих рішень.',
-    'Постійно проявляє високу активність у стратегічних та міжфункціональних ініціативах. Формує культуру, у якій залученість є нормою командної роботи.'
+    ['Уникає активної участі у стратегічних або важливих робочих процесах. Формально присутній на зустрічах або обговореннях, але практично не впливає на результат. Команда не відчуває його залученості у спільну роботу.'],
+    ['Іноді бере участь у ключових процесах, але переважно виконує роль спостерігача. Рідко проявляє ініціативу у важливих обговореннях або проєктах. Команда мало залучена до прийняття рішень.'],
+    ['Регулярно бере участь у ключових процесах і проєктах. Залучає команду до обговорення важливих рішень. Показує приклад відповідальності та участі для підлеглих.'],
+    ['Активно бере участь у стратегічних та міжфункціональних процесах. Створює умови, щоб команда була залучена до обговорення та прийняття важливих рішень. Демонструє особисту зацікавленість у спільному результаті.'],
+    ['Постійно проявляє високу активність у стратегічних та міжфункціональних ініціативах. Створює середовище, де кожен член команди відчуває важливість свого внеску. Формує культуру, у якій залученість є нормою командної роботи.']
   ]},
   { id:'initiative', group:'Загальнокорпоративні компетенції', name:'Ініціативність', levels:[
-    'Працює виключно за інструкціями та дорученнями. Не пропонує нових ідей або покращень. Може стримувати ініціативу команди.',
-    'Рідко пропонує нові ідеї або зміни. Переважно підтримує існуючі процеси та уникає нестандартних рішень.',
-    'Пропонує нові ідеї у межах своєї області відповідальності. Підтримує ініціативу підлеглих. Сприяє покращенню процесів у команді.',
-    'Регулярно ініціює зміни та покращення у роботі підрозділу. Активно підтримує ідеї команди та допомагає їх реалізовувати.',
-    'Системно ініціює зміни, що покращують роботу команди або процесів компанії. Формує культуру, де ініціатива цінується і перетворюється на конкретні результати.'
+    ['Працює виключно за інструкціями та дорученнями. Не пропонує нових ідей або покращень. Може стримувати ініціативу команди, надаючи перевагу звичним підходам.'],
+    ['Рідко пропонує нові ідеї або зміни. Переважно підтримує існуючі процеси та уникає нестандартних рішень.'],
+    ['Пропонує нові ідеї у межах своєї області відповідальності. Підтримує ініціативу підлеглих. Сприяє покращенню процесів у команді.'],
+    ['Регулярно ініціює зміни та покращення у роботі підрозділу. Активно підтримує ідеї команди та допомагає їх реалізовувати. Виходить за межі стандартних підходів у пошуку рішень.'],
+    ['Системно ініціює зміни, що покращують роботу команди або процесів компанії. Створює умови для генерації та реалізації ідей у команді. Формує культуру, де ініціатива цінується, підтримується і перетворюється на конкретні результати.']
   ]},
   { id:'development', group:'Загальнокорпоративні компетенції', name:'Розвиток', levels:[
-    'Майже не приділяє уваги власному розвитку. Не ділиться знаннями з командою та не створює можливостей для навчання співробітників.',
-    'Іноді займається власним розвитком, але системності немає. Знаннями з командою ділиться рідко. Розвиток співробітників не є частиною регулярної практики.',
-    'Регулярно працює над власним розвитком і розвитком окремих співробітників. Ділиться знаннями з командою. Підтримує навчання у межах підрозділу.',
-    'Системно розвиває ключових співробітників та підтримує навчання в команді. Знаходить можливості для навчання у межах регулярної управлінської практики.',
-    'Системно розвиває себе, команду та міжфункціональні групи. Є прикладом безперервного розвитку та формує культуру навчання для інших керівників.'
+    ['Майже не приділяє уваги власному розвитку. Не ділиться знаннями з командою та не створює можливостей для навчання співробітників. Питання розвитку не є пріоритетом у роботі.'],
+    ['Іноді займається власним розвитком, але системності у цьому немає. Знання з командою ділиться рідко. Розвиток співробітників не є частиною регулярної управлінської практики.'],
+    ['Регулярно працює над власним розвитком і розвитком окремих співробітників. Ділиться знаннями з командою. Підтримує навчання і покращення процесів у межах підрозділу.'],
+    ['Системно розвиває ключових співробітників команди. Створює можливості для навчання та передачі знань у підрозділі. Заохочує команду до професійного розвитку та вдосконалення процесів.'],
+    ['Системно розвиває себе, команду та міжфункціональні групи. Створює середовище для навчання, обміну досвідом та передачі знань. Формує культуру безперервного розвитку і є прикладом для інших керівників та співробітників.']
   ]}
 ];
 
-let employeeName = '', role = '', currentStep = 0;
-let answers = {};
+// State
+// answers[compId].selected = Set of 'levelIdx_stmtIdx' strings
+// answers[compId].comment = ''
+let employeeName='', role='', currentStep=0, answers={};
 
 window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  employeeName = params.get('employee') || '';
-  role = params.get('role') || '';
-
-  if (!employeeName || !['manager','colleague','subordinate'].includes(role)) {
-    showScreen('screenError'); return;
-  }
-
+  const p = new URLSearchParams(window.location.search);
+  employeeName = p.get('employee') || '';
+  role = p.get('role') || '';
+  if (!employeeName || !['manager','colleague','subordinate'].includes(role)) { showScreen('screenError'); return; }
   COMPETENCIES.forEach(c => { answers[c.id] = { selected: new Set(), comment: '' }; });
-
   document.getElementById('employeeName').textContent = employeeName;
   document.getElementById('headerMeta').textContent = `${employeeName} · ${roleLabel(role)}`;
-  const badge = document.getElementById('roleBadge');
-  badge.textContent = roleLabel(role);
-  badge.className = `badge ${role}`;
+  const b = document.getElementById('roleBadge');
+  b.textContent = roleLabel(role); b.className = `badge ${role}`;
   showScreen('screenIntro');
 });
 
-function roleLabel(r) {
-  return { manager:'Керівник', colleague:'Колега', subordinate:'Підлеглий' }[r] || r;
-}
+function roleLabel(r) { return {manager:'Керівник',colleague:'Колега',subordinate:'Підлеглий'}[r]||r; }
 
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function startSurvey() { currentStep = 0; showScreen('screenSurvey'); renderStep(); }
+function startSurvey() { currentStep=0; showScreen('screenSurvey'); renderStep(); }
 
 function renderStep() {
   const comp = COMPETENCIES[currentStep];
   const total = COMPETENCIES.length;
-  const done = Object.values(answers).filter(a => a.selected.size > 0).length;
+  const done = Object.values(answers).filter(a=>a.selected.size>0).length;
 
-  document.getElementById('progressLabel').textContent = `Компетенція ${currentStep + 1} з ${total}`;
-  document.getElementById('progressCounter').textContent = `${done} / ${total}`;
-  document.getElementById('progressFill').style.width = `${(currentStep / total) * 100}%`;
-  document.getElementById('compNum').textContent = currentStep + 1;
-  document.getElementById('compGroup').textContent = comp.group.toUpperCase();
-  document.getElementById('compName').textContent = comp.name;
+  document.getElementById('progLabel').textContent = `Компетенція ${currentStep+1} з ${total}`;
+  document.getElementById('progCounter').textContent = `${done} / ${total}`;
+  document.getElementById('progFill').style.width = `${(currentStep/total)*100}%`;
+  document.getElementById('compNum').textContent = currentStep+1;
+  document.getElementById('compGrp').textContent = comp.group.toUpperCase();
+  document.getElementById('compNm').textContent = comp.name;
 
-  const container = document.getElementById('optionsList');
+  const container = document.getElementById('stmtsContainer');
   container.innerHTML = '';
-  const savedSelected = answers[comp.id].selected;
+  const sel = answers[comp.id].selected;
 
-  comp.levels.forEach((text, idx) => {
-    const isSelected = savedSelected.has(idx);
-    const card = document.createElement('div');
-    card.className = 'option-card' + (isSelected ? ' selected' : '');
-    card.onclick = () => toggleOption(comp.id, idx, card);
-    card.innerHTML = `
-      <div class="option-header">
-        <div class="option-score">${idx + 1}</div>
-        <div class="option-text">${text}</div>
-        <div class="option-check">${isSelected ? '✓' : ''}</div>
-      </div>`;
-    container.appendChild(card);
+  comp.levels.forEach((stmts, li) => {
+    const hasSelected = stmts.some((_,si) => sel.has(`${li}_${si}`));
+    const grp = document.createElement('div');
+    grp.className = 'level-group' + (hasSelected ? ' has-selected' : '');
+    grp.id = `lvlgrp_${li}`;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'level-label';
+    lbl.innerHTML = `<div class="lnum">${li+1}</div> Рівень ${li+1}`;
+    grp.appendChild(lbl);
+
+    const stmtsDiv = document.createElement('div');
+    stmtsDiv.className = 'stmts';
+
+    stmts.forEach((text, si) => {
+      const key = `${li}_${si}`;
+      const isSelected = sel.has(key);
+      const card = document.createElement('div');
+      card.className = 'stmt-card' + (isSelected ? ' selected' : '');
+      card.innerHTML = `<div class="stmt-check">${isSelected?'✓':''}</div><div class="stmt-text">${text}</div>`;
+      card.onclick = () => toggleStmt(comp.id, li, si, key, card);
+      stmtsDiv.appendChild(card);
+    });
+
+    grp.appendChild(stmtsDiv);
+    container.appendChild(grp);
   });
 
-  document.getElementById('currentComment').value = answers[comp.id].comment || '';
-  document.getElementById('btnBack').style.visibility = currentStep === 0 ? 'hidden' : 'visible';
-  document.getElementById('btnNext').textContent = currentStep === total - 1 ? 'До підсумку →' : 'Далі →';
-  document.getElementById('errorMsg').style.display = 'none';
+  document.getElementById('curComment').value = answers[comp.id].comment || '';
+  document.getElementById('btnBack').style.visibility = currentStep===0 ? 'hidden' : 'visible';
+  document.getElementById('btnNext').textContent = currentStep===total-1 ? 'До підсумку →' : 'Далі →';
+  document.getElementById('errMsg').style.display = 'none';
 }
 
-function toggleOption(compId, idx, cardEl) {
+function toggleStmt(compId, li, si, key, cardEl) {
   const sel = answers[compId].selected;
-  if (sel.has(idx)) {
-    sel.delete(idx);
+  if (sel.has(key)) {
+    sel.delete(key);
     cardEl.classList.remove('selected');
-    cardEl.querySelector('.option-check').textContent = '';
-    cardEl.querySelector('.option-score').style.background = '';
-    cardEl.querySelector('.option-score').style.color = '';
-    cardEl.querySelector('.option-score').style.borderColor = '';
+    cardEl.querySelector('.stmt-check').textContent = '';
   } else {
-    sel.add(idx);
+    sel.add(key);
     cardEl.classList.add('selected');
-    cardEl.querySelector('.option-check').textContent = '✓';
+    cardEl.querySelector('.stmt-check').textContent = '✓';
   }
+  // Update level group highlight
+  const comp = COMPETENCIES[currentStep];
+  const grp = document.getElementById(`lvlgrp_${li}`);
+  const hasAny = comp.levels[li].some((_,s)=>sel.has(`${li}_${s}`));
+  grp.classList.toggle('has-selected', hasAny);
 }
 
 function goNext() {
-  answers[COMPETENCIES[currentStep].id].comment = document.getElementById('currentComment').value;
+  answers[COMPETENCIES[currentStep].id].comment = document.getElementById('curComment').value;
   if (answers[COMPETENCIES[currentStep].id].selected.size === 0) {
-    document.getElementById('errorMsg').style.display = 'block';
-    document.getElementById('errorMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('errMsg').style.display = 'block';
+    document.getElementById('errMsg').scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
-  if (currentStep < COMPETENCIES.length - 1) { currentStep++; renderStep(); }
+  if (currentStep < COMPETENCIES.length-1) { currentStep++; renderStep(); }
   else { showSummary(); }
 }
 
 function goBack() {
-  answers[COMPETENCIES[currentStep].id].comment = document.getElementById('currentComment').value;
-  if (currentStep > 0) { currentStep--; renderStep(); }
+  answers[COMPETENCIES[currentStep].id].comment = document.getElementById('curComment').value;
+  if (currentStep>0) { currentStep--; renderStep(); }
 }
 
 function calcAvg(compId) {
+  const comp = COMPETENCIES.find(c=>c.id===compId);
   const sel = answers[compId].selected;
   if (!sel.size) return null;
-  return Math.round(([...sel].reduce((a, i) => a + (i + 1), 0) / sel.size) * 10) / 10;
+  // For each selected statement, its score = level index + 1
+  const scores = [...sel].map(key => parseInt(key.split('_')[0]) + 1);
+  // Average of unique levels selected
+  const uniqueLevels = [...new Set(scores)];
+  return Math.round(uniqueLevels.reduce((a,b)=>a+b,0)/uniqueLevels.length * 10)/10;
 }
 
 function showSummary() {
   showScreen('screenSummary');
-  let total = 0, count = 0;
-  COMPETENCIES.forEach(c => { const avg = calcAvg(c.id); if (avg !== null) { total += avg; count++; } });
+  let total=0, count=0;
+  COMPETENCIES.forEach(c=>{ const avg=calcAvg(c.id); if(avg!==null){total+=avg;count++;} });
   document.getElementById('totalComp').textContent = count;
-  document.getElementById('avgScore').textContent = count ? (total / count).toFixed(1) : '—';
+  document.getElementById('avgScore').textContent = count ? (total/count).toFixed(1) : '—';
 
   const list = document.getElementById('scoresList');
   list.innerHTML = '';
@@ -526,35 +487,34 @@ function showSummary() {
     const selCount = answers[c.id].selected.size;
     list.innerHTML += `
       <div class="score-row">
-        <div class="score-name">${c.name}</div>
-        <div class="score-sel">${selCount} вар.</div>
-        <div class="score-bar-wrap"><div class="score-bar-fill" style="width:${avg ? avg/5*100 : 0}%"></div></div>
-        <div class="score-num">${avg ?? '—'}</div>
+        <div class="score-nm">${c.name}</div>
+        <div class="score-sel">${selCount} тв.</div>
+        <div class="score-bar-w"><div class="score-bar-f" style="width:${avg?avg/5*100:0}%"></div></div>
+        <div class="score-num">${avg??'—'}</div>
       </div>`;
   });
 }
 
 async function submitSurvey() {
-  document.getElementById('loadingOverlay').classList.add('active');
-  const payload = {
-    timestamp: new Date().toISOString(), employee: employeeName, role,
-    answers: {}
-  };
+  document.getElementById('loader').classList.add('active');
+  const payload = { timestamp: new Date().toISOString(), employee: employeeName, role, answers: {} };
   COMPETENCIES.forEach(c => {
-    const sel = [...answers[c.id].selected].sort();
+    const sel = [...answers[c.id].selected];
+    const levelScores = [...new Set(sel.map(k=>parseInt(k.split('_')[0])+1))].sort();
     payload.answers[c.id] = {
       name: c.name, group: c.group,
-      selectedLevels: sel.map(i => i + 1),
+      selectedStatements: sel.length,
+      selectedLevels: levelScores,
       avgScore: calcAvg(c.id),
       comment: answers[c.id].comment
     };
   });
   try {
-    await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload), mode:'no-cors' });
-    document.getElementById('loadingOverlay').classList.remove('active');
+    await fetch(APPS_SCRIPT_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),mode:'no-cors'});
+    document.getElementById('loader').classList.remove('active');
     showScreen('screenThanks');
   } catch(err) {
-    document.getElementById('loadingOverlay').classList.remove('active');
+    document.getElementById('loader').classList.remove('active');
     alert('Помилка збереження. Перевірте підключення та спробуйте ще раз.');
   }
 }
