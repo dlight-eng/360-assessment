@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оцінка 360° | Компетенції</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2330;
+    --border: #2a3040;
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --gold: #f59e0b;
+    --text: #e8eaf0;
+    --text2: #8892a4;
+    --text3: #4a5568;
+    --success: #10b981;
+    --danger: #ef4444;
+    --radius: 12px;
+    --radius-lg: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geologica', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(79,142,247,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(124,58,237,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 28px 0 36px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .logo {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(79,142,247,0.3);
+  }
+
+  .header-info h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .header-info p {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .badge {
+    margin-left: auto;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid;
+    flex-shrink: 0;
+  }
+
+  .badge.manager { background: rgba(245,158,11,0.1); color: var(--gold); border-color: rgba(245,158,11,0.3); }
+  .badge.colleague { background: rgba(79,142,247,0.1); color: var(--accent); border-color: rgba(79,142,247,0.3); }
+  .badge.subordinate { background: rgba(16,185,129,0.1); color: var(--success); border-color: rgba(16,185,129,0.3); }
+  .badge.self { background: rgba(124,58,237,0.1); color: #a78bfa; border-color: rgba(124,58,237,0.3); }
+
+  /* Screens */
+  .screen { display: none; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Intro screen */
+  .intro-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    margin-bottom: 20px;
+  }
+
+  .intro-card h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--text), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .intro-card p {
+    color: var(--text2);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  .employee-target {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 10px 18px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+  }
+
+  .employee-target strong { color: var(--accent); }
+
+  .rules {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .rules h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .rule-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .rule-item:last-child { border-bottom: none; }
+
+  .rule-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(79,142,247,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .rule-text { font-size: 14px; color: var(--text2); line-height: 1.5; padding-top: 4px; }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin-bottom: 28px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .progress-label {
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .progress-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Section */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .section-type {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin-top: 2px;
+  }
+
+  /* Question card */
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .question-card.answered { border-color: rgba(79,142,247,0.3); }
+
+  .question-text {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  /* Scale */
+  .scale {
+    display: flex;
+    gap: 8px;
+  }
+
+  .scale-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .scale-btn {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: all 0.18s;
+    color: var(--text2);
+    max-width: 60px;
+  }
+
+  .scale-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(79,142,247,0.08);
+    transform: translateY(-2px);
+  }
+
+  .scale-option.selected .scale-btn {
+    border-color: var(--accent);
+    background: rgba(79,142,247,0.15);
+    color: var(--text);
+    box-shadow: 0 0 12px rgba(79,142,247,0.2);
+    transform: translateY(-2px);
+  }
+
+  .scale-label {
+    font-size: 10px;
+    color: var(--text3);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .scale-ends {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text3);
+    font-style: italic;
+  }
+
+  /* Comment box */
+  .comment-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-top: 8px;
+    margin-bottom: 14px;
+  }
+
+  .comment-section label {
+    font-size: 13px;
+    color: var(--text2);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .comment-section textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Geologica', sans-serif;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .comment-section textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .comment-section textarea::placeholder { color: var(--text3); }
+
+  /* Nav */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: 'Geologica', sans-serif;
+    transition: all 0.18s;
+    letter-spacing: -0.2px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #3a70d4);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(79,142,247,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(79,142,247,0.4);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--success), #059669);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+  }
+
+  /* Error message */
+  .error-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #fca5a5;
+    margin-top: 16px;
+    display: none;
+  }
+
+  /* Summary */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .summary-card .s-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 8px;
+  }
+
+  .summary-card .s-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .summary-card .s-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  /* Scores preview */
+  .scores-list { margin-bottom: 24px; }
+
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .score-row:last-child { border-bottom: none; }
+
+  .score-name {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text2);
+  }
+
+  .score-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  .dot.filled { background: var(--accent); }
+
+  .score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    width: 28px;
+    text-align: right;
+  }
+
+  /* Thank you */
+  .thankyou {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .thankyou-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05));
+    border: 2px solid rgba(16,185,129,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 28px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+    50% { box-shadow: 0 0 0 16px rgba(16,185,129,0); }
+  }
+
+  .thankyou h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+
+  .thankyou p {
+    color: var(--text2);
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* Loading overlay */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,17,23,0.85);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .loading-overlay.active { display: flex; }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-size: 14px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Error screen */
+  .error-screen {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .error-screen h2 {
+    font-size: 22px;
+    color: var(--danger);
+    margin-bottom: 12px;
+  }
+
+  .error-screen p {
+    color: var(--text2);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .error-screen code {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  @media (max-width: 520px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .scale { gap: 5px; }
+    .scale-btn { font-size: 13px; }
+    .intro-card { padding: 24px; }
+    .header { padding: 20px 0 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Збереження відповідей...</div>
+</div>
+
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">◎</div>
+    <div class="header-info">
+      <h1>Оцінка 360°</h1>
+      <p id="headerMeta">Завантаження...</p>
+    </div>
+    <span class="badge" id="roleBadge"></span>
+  </header>
+
+  <!-- Error screen -->
+  <div class="screen active" id="screenError">
+    <div class="error-screen">
+      <h2>⚠ Невірне посилання</h2>
+      <p>Для відкриття опитування необхідне коректне посилання з параметрами.<br>Зверніться до координатора опитування.</p>
+      <br>
+      <code>Очікуваний формат: ?employee=Прізвище&role=colleague</code>
+    </div>
+  </div>
+
+  <!-- Intro screen -->
+  <div class="screen" id="screenIntro">
+    <div class="intro-card">
+      <h2>Оцінка компетенцій</h2>
+      <p>Вас запрошено взяти участь в оцінці 360°. Ваші відповіді допоможуть отримати об'єктивну картину розвитку компетенцій.</p>
+      <div class="employee-target">
+        👤 Оцінюєте: <strong id="employeeName">—</strong>
+      </div>
+    </div>
+
+    <div class="rules">
+      <h3>Як проходити опитування</h3>
+      <div class="rule-item">
+        <div class="rule-icon">🔒</div>
+        <div class="rule-text">Ваші відповіді анонімні. Індивідуальні оцінки не розкриваються — тільки усереднені результати по групах.</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon">⭐</div>
+        <div class="rule-text">Оцінюйте за шкалою <strong>1–5</strong> де 1 — компетенція не проявляється, 5 — проявляється на найвищому рівні.</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon">🎯</div>
+        <div class="rule-text">Оцінюйте реальну поведінку, яку ви спостерігаєте, а не ідеальний образ людини.</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon">⏱</div>
+        <div class="rule-text">Орієнтовний час: <strong>10–15 хвилин</strong>. Пройдіть опитування за один сеанс.</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startSurvey()" style="width:100%">Розпочати оцінку →</button>
+  </div>
+
+  <!-- Survey screen -->
+  <div class="screen" id="screenSurvey">
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span class="progress-label" id="progressLabel">Розділ 1 з 2</span>
+        <span class="progress-counter" id="progressCounter">0 / 0</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div id="sectionHeader" class="section-header">
+      <div class="section-num" id="sectionNum">1</div>
+      <div>
+        <div class="section-type" id="sectionType">УПРАВЛІНСЬКІ КОМПЕТЕНЦІЇ</div>
+        <div class="section-title" id="sectionTitle">—</div>
+      </div>
+    </div>
+
+    <div id="questionsContainer"></div>
+
+    <div class="comment-section">
+      <label>💬 Коментар до цієї компетенції <span style="color:var(--text3)">(необов'язково)</span></label>
+      <textarea id="currentComment" placeholder="Наведіть конкретний приклад поведінки або ситуацію..."></textarea>
+    </div>
+
+    <div class="error-msg" id="errorMsg">Будь ласка, оцініть усі твердження перед тим як продовжити.</div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" id="btnBack" onclick="goBack()">← Назад</button>
+      <button class="btn btn-primary" id="btnNext" onclick="goNext()">Далі →</button>
+    </div>
+  </div>
+
+  <!-- Summary screen -->
+  <div class="screen" id="screenSummary">
+    <div class="intro-card">
+      <h2>Перевірте відповіді</h2>
+      <p>Огляньте свої оцінки перед відправкою. Після підтвердження відповіді не можна змінити.</p>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="s-label">Всього запитань</div>
+        <div class="s-val" id="totalAnswered">—</div>
+        <div class="s-sub">відповідей надано</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-label">Середня оцінка</div>
+        <div class="s-val" id="avgScore">—</div>
+        <div class="s-sub">з 5 балів</div>
+      </div>
+    </div>
+
+    <div class="scores-list" id="scoresList"></div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="showScreen('screenSurvey'); currentStep = questions.length - 1; renderStep()">← Редагувати</button>
+      <button class="btn btn-success" onclick="submitSurvey()">✓ Відправити оцінку</button>
+    </div>
+  </div>
+
+  <!-- Thank you screen -->
+  <div class="screen" id="screenThanks">
+    <div class="thankyou">
+      <div class="thankyou-icon">✓</div>
+      <h2>Дякуємо!</h2>
+      <p>Ваші відповіді успішно збережено. Вони будуть враховані при формуванні загального звіту 360°.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// КОНФІГУРАЦІЯ — замініть URL після деплою Apps Script
+// ============================================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbzN16CbMjC_p6eNzwkN9Skjmi-tCr1-JcoGF9IsQFZec83I_ds4Ngdp2fiMCOl1eTNQ/exec';
+
+// ============================================================
+// ДАНІ: Компетенції та запитання
+// ============================================================
+const COMPETENCIES = [
+  {
+    id: 'risk',
+    group: 'Управлінські компетенції',
+    name: 'Управління ризиками',
+    questions: [
+      'Аналізує ризики та планує дії для їх мінімізації перед прийняттям рішень',
+      'Визначає ключові ризики у своїй діяльності та приймає заходи для їх зниження',
+      'Регулярно обговорює потенційні ризики з командою',
+    ]
+  },
+  {
+    id: 'time',
+    group: 'Управлінські компетенції',
+    name: 'Управління часом',
+    questions: [
+      'Планує робочий час і завдання, дотримується встановлених строків',
+      'Регулярно застосовує інструменти планування для прийняття рішень та аналітики',
+      'Частково делегує задачі, підтримуючи командну операційну роботу',
+    ]
+  },
+  {
+    id: 'digital',
+    group: 'Управлінські компетенції',
+    name: 'Цифрова компетентність',
+    questions: [
+      'Використовує цифрові інструменти для аналізу інформації та підготовки матеріалів',
+      'Розуміє цифрові можливості та обмеження, що впливають на роботу команди',
+      'Підтримує ініціативи з автоматизації цифрових процесів',
+    ]
+  },
+  {
+    id: 'strategic',
+    group: 'Управлінські компетенції',
+    name: 'Стратегічне мислення',
+    questions: [
+      'Мислить категоріями системи та розвитку компанії, а не лише поточними завданнями',
+      'Аналізує кілька варіантів розвитку подій з урахуванням середньострокових наслідків',
+      'Узгоджує дії своєї команди зі стратегічними пріоритетами організації',
+    ]
+  },
+  {
+    id: 'delegation',
+    group: 'Управлінські компетенції',
+    name: 'Делегування',
+    questions: [
+      'Делегує завдання відповідно до рівня відповідальності, не лише поточні операційні задачі',
+      'Контролює результати роботи, не втручаючись у кожен операційний учинок',
+      'Будує систему ефективного делегування із самостійним розвитком співробітників',
+    ]
+  },
+  {
+    id: 'resilience',
+    group: 'Управлінські компетенції',
+    name: 'Особиста стійкість керівника',
+    questions: [
+      'Зберігає ефективність і стабільний емоційний стан в умовах зовнішнього тиску',
+      'Усвідомлює межі своєї регуляції та використовує інструменти самосаморегуляції',
+      'Підтримує спокійну та конструктивну атмосферу в команді навіть під тиском',
+    ]
+  },
+  {
+    id: 'responsibility',
+    group: 'Загальнокорпоративні компетенції',
+    name: 'Відповідальність',
+    questions: [
+      'Бере відповідальність за результати своєї роботи та не перекладає провину на інших',
+      'Формально відповідає за результат своєї роботи та виконує тактичні завдання',
+      'Несе відповідальність за результати команди у межах своїх функцій',
+    ]
+  },
+  {
+    id: 'engagement',
+    group: 'Загальнокорпоративні компетенції',
+    name: 'Залученість',
+    questions: [
+      'Регулярно бере участь у ключових процесах та обговоренні важливих рішень',
+      'Показує приклад залученості та активності для підлеглих',
+      'Активно бере участь у стратегічних та міжфункціональних ініціативах компанії',
+    ]
+  },
+  {
+    id: 'initiative',
+    group: 'Загальнокорпоративні компетенції',
+    name: 'Ініціативність',
+    questions: [
+      'Пропонує нові ідеї та покращення у межах своєї роботи',
+      'Спрямовує покращення процесів у своєму підрозділі',
+      'Виходить за межі стандартного підходу і формує культуру ініціативності в команді',
+    ]
+  },
+  {
+    id: 'development',
+    group: 'Загальнокорпоративні компетенції',
+    name: 'Розвиток',
+    questions: [
+      'Ділиться знаннями з командою та підтримує навчання співробітників',
+      'Створює можливості для навчання та передачі знань у підрозділі',
+      'Формує культуру безперервного розвитку та є прикладом для інших керівників',
+    ]
+  }
+];
+
+const SCALE_LABELS = ['', 'Не\nпроявляється', 'Рідко', 'Іноді', 'Часто', 'Завжди'];
+
+// ============================================================
+// STATE
+// ============================================================
+let employeeName = '';
+let role = '';
+let currentStep = 0; // index in COMPETENCIES
+let answers = {}; // { competencyId: { q0: 3, q1: 5, ... , comment: '' } }
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  employeeName = params.get('employee') || '';
+  role = params.get('role') || '';
+
+  if (!employeeName || !role || !['manager','colleague','subordinate'].includes(role)) {
+    showScreen('screenError');
+    return;
+  }
+
+  // Init answers
+  COMPETENCIES.forEach(c => {
+    answers[c.id] = { comment: '' };
+    c.questions.forEach((_, i) => { answers[c.id][`q${i}`] = null; });
+  });
+
+  // Set header
+  document.getElementById('employeeName').textContent = employeeName;
+  document.getElementById('headerMeta').textContent = `${employeeName} · ${roleLabel(role)}`;
+  const badge = document.getElementById('roleBadge');
+  badge.textContent = roleLabel(role);
+  badge.className = `badge ${role}`;
+
+  showScreen('screenIntro');
+});
+
+function roleLabel(r) {
+  return { manager: 'Керівник', colleague: 'Колега', subordinate: 'Підлеглий' }[r] || r;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startSurvey() {
+  currentStep = 0;
+  showScreen('screenSurvey');
+  renderStep();
+}
+
+function renderStep() {
+  const comp = COMPETENCIES[currentStep];
+  const total = COMPETENCIES.length;
+
+  // Progress
+  const answered = countAnswered();
+  const totalQ = COMPETENCIES.reduce((s, c) => s + c.questions.length, 0);
+  document.getElementById('progressLabel').textContent = `Розділ ${currentStep + 1} з ${total}`;
+  document.getElementById('progressCounter').textContent = `${answered} / ${totalQ}`;
+  document.getElementById('progressFill').style.width = `${(currentStep / total) * 100}%`;
+
+  // Section header
+  document.getElementById('sectionNum').textContent = currentStep + 1;
+  document.getElementById('sectionType').textContent = comp.group.toUpperCase();
+  document.getElementById('sectionTitle').textContent = comp.name;
+
+  // Questions
+  const container = document.getElementById('questionsContainer');
+  container.innerHTML = '';
+  comp.questions.forEach((q, qi) => {
+    const saved = answers[comp.id][`q${qi}`];
+    const card = document.createElement('div');
+    card.className = 'question-card' + (saved ? ' answered' : '');
+    card.id = `qcard_${qi}`;
+
+    const scaleHtml = [1,2,3,4,5].map(v => `
+      <div class="scale-option ${saved === v ? 'selected' : ''}" onclick="selectAnswer('${comp.id}', ${qi}, ${v})" data-val="${v}">
+        <div class="scale-btn">${v}</div>
+        <div class="scale-label">${SCALE_LABELS[v]}</div>
+      </div>
+    `).join('');
+
+    card.innerHTML = `
+      <div class="question-text">${qi + 1}. ${q}</div>
+      <div class="scale" id="scale_${qi}">${scaleHtml}</div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Comment
+  document.getElementById('currentComment').value = answers[comp.id].comment || '';
+
+  // Buttons
+  document.getElementById('btnBack').style.visibility = currentStep === 0 ? 'hidden' : 'visible';
+  document.getElementById('btnNext').textContent = currentStep === total - 1 ? 'До підсумку →' : 'Далі →';
+  document.getElementById('errorMsg').style.display = 'none';
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectAnswer(compId, qi, val) {
+  answers[compId][`q${qi}`] = val;
+  // Update UI
+  const scale = document.getElementById(`scale_${qi}`);
+  scale.querySelectorAll('.scale-option').forEach(opt => {
+    opt.classList.toggle('selected', parseInt(opt.dataset.val) === val);
+  });
+  document.getElementById(`qcard_${qi}`).classList.add('answered');
+}
+
+function goNext() {
+  // Save comment
+  answers[COMPETENCIES[currentStep].id].comment = document.getElementById('currentComment').value;
+
+  // Validate
+  const comp = COMPETENCIES[currentStep];
+  const allAnswered = comp.questions.every((_, i) => answers[comp.id][`q${i}`] !== null);
+  if (!allAnswered) {
+    document.getElementById('errorMsg').style.display = 'block';
+    document.getElementById('errorMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  if (currentStep < COMPETENCIES.length - 1) {
+    currentStep++;
+    renderStep();
+  } else {
+    showSummary();
+  }
+}
+
+function goBack() {
+  answers[COMPETENCIES[currentStep].id].comment = document.getElementById('currentComment').value;
+  if (currentStep > 0) {
+    currentStep--;
+    renderStep();
+  }
+}
+
+function countAnswered() {
+  let count = 0;
+  COMPETENCIES.forEach(c => {
+    c.questions.forEach((_, i) => { if (answers[c.id][`q${i}`] !== null) count++; });
+  });
+  return count;
+}
+
+// ============================================================
+// SUMMARY
+// ============================================================
+function showSummary() {
+  showScreen('screenSummary');
+
+  const totalQ = COMPETENCIES.reduce((s, c) => s + c.questions.length, 0);
+  document.getElementById('totalAnswered').textContent = countAnswered();
+
+  // Average
+  let sum = 0, cnt = 0;
+  COMPETENCIES.forEach(c => {
+    c.questions.forEach((_, i) => {
+      if (answers[c.id][`q${i}`] !== null) { sum += answers[c.id][`q${i}`]; cnt++; }
+    });
+  });
+  document.getElementById('avgScore').textContent = cnt ? (sum / cnt).toFixed(1) : '—';
+
+  // Scores list
+  const list = document.getElementById('scoresList');
+  list.innerHTML = '';
+  COMPETENCIES.forEach(c => {
+    let cSum = 0, cCnt = 0;
+    c.questions.forEach((_, i) => { if (answers[c.id][`q${i}`] !== null) { cSum += answers[c.id][`q${i}`]; cCnt++; } });
+    const avg = cCnt ? cSum / cCnt : 0;
+    const dotsHtml = [1,2,3,4,5].map(v => `<div class="dot ${v <= Math.round(avg) ? 'filled' : ''}"></div>`).join('');
+    list.innerHTML += `
+      <div class="score-row">
+        <div class="score-name">${c.name}</div>
+        <div class="score-dots">${dotsHtml}</div>
+        <div class="score-num">${avg.toFixed(1)}</div>
+      </div>
+    `;
+  });
+}
+
+// ============================================================
+// SUBMIT
+// ============================================================
+async function submitSurvey() {
+  const overlay = document.getElementById('loadingOverlay');
+  const loadingText = document.getElementById('loadingText');
+
+  overlay.classList.add('active');
+  loadingText.textContent = 'Збереження відповідей...';
+
+  // Build payload
+  const payload = {
+    timestamp: new Date().toISOString(),
+    employee: employeeName,
+    role: role,
+    answers: {}
+  };
+
+  COMPETENCIES.forEach(c => {
+    payload.answers[c.id] = {
+      name: c.name,
+      group: c.group,
+      scores: c.questions.map((q, i) => ({ question: q, score: answers[c.id][`q${i}`] })),
+      comment: answers[c.id].comment
+    };
+  });
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      mode: 'no-cors'
+    });
+
+    overlay.classList.remove('active');
+    showScreen('screenThanks');
+  } catch (err) {
+    overlay.classList.remove('active');
+    alert('Помилка збереження. Перевірте підключення та спробуйте ще раз.');
+  }
+}
+</script>
+</body>
+</html>
