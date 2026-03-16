@@ -226,7 +226,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxzQ06LRiUtI-ZtPqVsbuCAMZLQA9SOAmEkTI0BCtQGMqD-MzbKyOt2faQQDl0WsBW/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyjDWsd6LVGgfvzqZxg3Y2n_Ixki-5Dsq51a4sRXMADOLChyewK62r1IYT_EZdySmsuPA/exec';
 
 // levels[i] = масив тверджень рівня (i+1)
 const COMPETENCIES = [
@@ -326,12 +326,13 @@ COMPETENCIES.forEach(comp => {
 });
 
 // State: answers[compId] = { selected: Set of keys, comment: '' }
-let employeeName = '', role = '', currentStep = 0, answers = {};
+let employeeName = '', role = '', respondentName = '', currentStep = 0, answers = {};
 
 window.addEventListener('DOMContentLoaded', () => {
   const p = new URLSearchParams(window.location.search);
   employeeName = p.get('employee') || '';
   role = p.get('role') || '';
+  respondentName = p.get('respondent') || '';
   if (!employeeName || !['manager','colleague','subordinate'].includes(role)) { showScreen('screenError'); return; }
   COMPETENCIES.forEach(c => { answers[c.id] = { selected: new Set(), comment: '' }; });
   document.getElementById('employeeName').textContent = employeeName;
@@ -446,7 +447,7 @@ function showSummary() {
 async function submitSurvey() {
   document.getElementById('loader').classList.add('active');
 
-  const payload = { timestamp: new Date().toISOString(), employee: employeeName, role, answers: {} };
+  const payload = { timestamp: new Date().toISOString(), employee: employeeName, role, respondent: respondentName, answers: {} };
 
   COMPETENCIES.forEach(c => {
     const r = calcResult(c.id);
