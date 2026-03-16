@@ -7,18 +7,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #181c27;
-    --surface2: #1e2330;
-    --border: #2a3040;
-    --accent: #4f8ef7;
+    --bg: #f2f5fb;
+    --surface: #ffffff;
+    --surface2: #eef1f8;
+    --border: #dde3f0;
+    --accent: #2563eb;
     --accent2: #7c3aed;
-    --gold: #f59e0b;
-    --text: #e8eaf0;
-    --text2: #8892a4;
-    --text3: #4a5568;
-    --success: #10b981;
-    --danger: #ef4444;
+    --gold: #d97706;
+    --text: #111827;
+    --text2: #4b5563;
+    --text3: #9ca3af;
+    --success: #059669;
+    --danger: #dc2626;
     --radius: 12px;
     --radius-lg: 20px;
   }
@@ -38,8 +38,8 @@
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(79,142,247,0.06) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(124,58,237,0.05) 0%, transparent 60%);
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(37,99,235,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(124,58,237,0.03) 0%, transparent 60%);
     pointer-events: none;
     z-index: 0;
   }
@@ -85,9 +85,9 @@
     font-size: 12px;
     font-weight: 500;
     font-family: 'JetBrains Mono', monospace;
-    border: 1px solid rgba(124,58,237,0.4);
-    background: rgba(124,58,237,0.1);
-    color: #a78bfa;
+    border: 1px solid rgba(124,58,237,0.3);
+    background: rgba(124,58,237,0.08);
+    color: var(--accent2);
   }
 
   /* Layout */
@@ -252,7 +252,7 @@
   }
 
   .role-check:hover { border-color: var(--accent); }
-  .role-check.active { border-color: var(--accent); background: rgba(79,142,247,0.08); }
+  .role-check.active { border-color: var(--accent); background: rgba(37,99,235,0.06); }
 
   .role-check input { display: none; }
 
@@ -274,7 +274,7 @@
   .btn-generate {
     width: 100%;
     padding: 13px;
-    background: linear-gradient(135deg, var(--accent2), #4f46e5);
+    background: linear-gradient(135deg, var(--accent), #1d4ed8);
     border: none;
     border-radius: 10px;
     color: #fff;
@@ -283,11 +283,11 @@
     font-family: 'Geologica', sans-serif;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+    box-shadow: 0 4px 16px rgba(37,99,235,0.25);
     letter-spacing: -0.2px;
   }
 
-  .btn-generate:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+  .btn-generate:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
   .btn-generate:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
   /* Results */
@@ -392,15 +392,15 @@
     text-align: center;
   }
 
-  .link-role-badge.manager { background: rgba(245,158,11,0.1); color: var(--gold); border-color: rgba(245,158,11,0.3); }
-  .link-role-badge.colleague { background: rgba(79,142,247,0.1); color: var(--accent); border-color: rgba(79,142,247,0.3); }
-  .link-role-badge.subordinate { background: rgba(16,185,129,0.1); color: var(--success); border-color: rgba(16,185,129,0.3); }
+  .link-role-badge.manager { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+  .link-role-badge.colleague { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+  .link-role-badge.subordinate { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
 
   .link-url {
     flex: 1;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    color: var(--text3);
+    color: var(--text2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -445,16 +445,15 @@
     bottom: 32px;
     left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--text);
     border-radius: 100px;
     padding: 10px 20px;
     font-size: 13px;
-    color: var(--text2);
+    color: #fff;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 100;
     white-space: nowrap;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   }
 
   .toast.show { transform: translateX(-50%) translateY(0); }
@@ -490,7 +489,8 @@
 
         <div class="field">
           <label>Базова URL сторінки опитування</label>
-          <input type="text" id="baseUrl" placeholder="https://username.github.io/360-assessment/" value="">
+          <input type="text" id="baseUrl" placeholder="https://dlight-eng.github.io/360-assessment" value="https://dlight-eng.github.io/360-assessment">
+          <div style="margin-top:6px;font-size:12px;color:var(--text3);">💡 Вставте адресу вашого GitHub Pages без слешу в кінці</div>
         </div>
 
         <div class="panel-title" style="margin-top:4px">Співробітники</div>
