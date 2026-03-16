@@ -334,6 +334,16 @@ async function loadResults() {
 function renderResults(data) {
   if (!data || !data.competencies) return;
 
+  currentData = data;
+
+  // Reset AI panel
+  document.getElementById('aiContent').innerHTML = `
+    <div style="text-align:center;padding:32px 20px;color:var(--text3);font-size:14px;">
+      Натисніть кнопку щоб отримати детальний аналіз результатів
+    </div>`;
+  document.getElementById('btnAI').disabled = false;
+  document.getElementById('btnAI').textContent = '✨ Згенерувати висновок';
+
   const comps = COMP_ORDER.map(id => data.competencies[id]);
   const roles = ['Керівник','Колега','Підлеглий'].filter(r => data.byRole && data.byRole[r]);
 
@@ -504,20 +514,6 @@ function renderComments(comments) {
 // AI SUMMARY
 // ============================================================
 let currentData = null;
-
-// Store data when results load
-const _origRenderResults = renderResults;
-function renderResults(data) {
-  currentData = data;
-  _origRenderResults(data);
-  // Reset AI panel
-  document.getElementById('aiContent').innerHTML = `
-    <div style="text-align:center;padding:32px 20px;color:var(--text3);font-size:14px;">
-      Натисніть кнопку щоб отримати детальний аналіз результатів
-    </div>`;
-  document.getElementById('btnAI').disabled = false;
-  document.getElementById('btnAI').textContent = '✨ Згенерувати висновок';
-}
 
 async function generateSummary() {
   if (!currentData) return;
