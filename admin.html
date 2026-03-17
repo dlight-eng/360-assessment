@@ -801,7 +801,11 @@ function renderStatuses() {
     catch(e) { return iso; }
   };
 
-  document.getElementById('statusTbody').innerHTML = filtered.map(s => `
+  document.getElementById('statusTbody').innerHTML = filtered.map(s => {
+    const reminderBtn = s.status !== 'Завершив'
+      ? `<button onclick="openReminderById('${s.linkId}')" style="padding:5px 12px;background:transparent;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);cursor:pointer;font-family:'Geologica',sans-serif;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">💬 Нагадати</button>`
+      : '<span style="font-size:12px;color:var(--success)">✓ готово</span>';
+    return `
     <tr style="border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
       <td style="padding:12px 16px;font-size:14px;font-weight:500;">${s.respondent || '—'}</td>
       <td style="padding:12px 16px;font-size:13px;color:var(--text2);">${s.employee}</td>
@@ -810,13 +814,12 @@ function renderStatuses() {
       <td style="padding:12px 16px;font-size:12px;color:var(--text3);">
         ${s.finishedAt ? '✓ ' + formatTime(s.finishedAt) : s.startedAt ? '→ ' + formatTime(s.startedAt) : '—'}
       </td>
-      <td style="padding:12px 16px;text-align:center;">
-        ${s.status !== 'Завершив' ? `<button onclick="openReminder(${JSON.stringify(s).replace(/"/g,'&quot;')})" style="padding:5px 12px;background:transparent;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);cursor:pointer;font-family:'Geologica',sans-serif;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">💬 Нагадати</button>` : '<span style="font-size:12px;color:var(--success)">✓ готово</span>'}
-      </td>
+      <td style="padding:12px 16px;text-align:center;">${reminderBtn}</td>
       <td style="padding:12px 16px;text-align:center;">
         <button onclick="deleteLinkEntry('${s.linkId}', this)" style="padding:5px 12px;background:transparent;border:1px solid #fecaca;border-radius:6px;font-size:12px;color:var(--danger);cursor:pointer;font-family:'Geologica',sans-serif;transition:all .15s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">Видалити</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 async function deleteLinkEntry(linkId, btn) {
@@ -1122,6 +1125,11 @@ function getLinkUrl(s) {
   return `${BASE_URL}/?employee=${emp}&role=${role}${resp ? `&respondent=${resp}` : ''}`;
 }
 
+function openReminderById(linkId) {
+  const s = allStatuses.find(x => x.linkId === linkId);
+  if (s) openReminder(s);
+}
+
 function openReminder(s) {
   const url = getLinkUrl(s);
   const name = s.respondent || 'Колего';
@@ -1194,8 +1202,9 @@ function copyReminder(btn, text) {
 }
 
 // Закрити модал по кліку поза ним
-document.getElementById('reminderModal')?.addEventListener('click', e => {
-  if (e.target === document.getElementById('reminderModal')) closeModal();
+window.addEventListener('click', e => {
+  const modal = document.getElementById('reminderModal');
+  if (modal && e.target === modal) closeModal();
 });
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
