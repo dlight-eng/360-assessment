@@ -227,7 +227,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf3f462Sfb67TowxPLPnSUedTYnfb0mqd1yhgSmEmLsS9AFtZzsG5Vw0OA7CMcLor65Q/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkbNH-nmLGtzdUP0bRP0lv-bBDXRgFVOOwe2hZc1Xr9TDbB9I-y9GUM9v0ZyvIm-AGog/exec';
 
 // levels[i] = масив тверджень рівня (i+1)
 const COMPETENCIES = [
@@ -335,7 +335,26 @@ window.addEventListener('DOMContentLoaded', () => {
   role = p.get('role') || '';
   respondentName = p.get('respondent') || '';
   if (!employeeName || !['manager','colleague','subordinate','self'].includes(role)) { showScreen('screenError'); return; }
+
+  // Унікальний ID посилання
+  window.linkId = `${employeeName}|${respondentName}|${role}`;
+
   COMPETENCIES.forEach(c => { answers[c.id] = { selected: new Set(), comment: '' }; });
+
+  // Відновлення прогресу з sessionStorage
+  const saved = sessionStorage.getItem(`360_progress_${window.linkId}`);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      COMPETENCIES.forEach(c => {
+        if (parsed[c.id]) {
+          answers[c.id].selected = new Set(parsed[c.id].selected || []);
+          answers[c.id].comment = parsed[c.id].comment || '';
+        }
+      });
+    } catch(e) {}
+  }
+
   document.getElementById('employeeName').textContent = employeeName;
   document.getElementById('headerMeta').textContent = `${employeeName} · ${roleLabel(role)}`;
   const b = document.getElementById('roleBadge');
@@ -351,7 +370,25 @@ function showScreen(id) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function startSurvey() { currentStep = 0; showScreen('screenSurvey'); renderStep(); }
+function startSurvey() {
+  // Запис статусу "розпочав"
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'updateStatus',
+      linkId: window.linkId,
+      employee: employeeName,
+      respondent: respondentName,
+      role,
+      status: 'started'
+    }),
+    mode: 'no-cors'
+  });
+  currentStep = 0;
+  showScreen('screenSurvey');
+  renderStep();
+}
 
 function updateSelCount() {
   const comp = COMPETENCIES[currentStep];
@@ -404,10 +441,25 @@ function toggleStmt(compId, key, cardEl) {
     cardEl.querySelector('.stmt-check').textContent = '✓';
   }
   updateSelCount();
+  saveProgress();
+}
+
+function saveProgress() {
+  try {
+    const data = {};
+    COMPETENCIES.forEach(c => {
+      data[c.id] = {
+        selected: [...answers[c.id].selected],
+        comment: answers[c.id].comment
+      };
+    });
+    sessionStorage.setItem(`360_progress_${window.linkId}`, JSON.stringify(data));
+  } catch(e) {}
 }
 
 function goNext() {
   answers[COMPETENCIES[currentStep].id].comment = document.getElementById('curComment').value;
+  saveProgress();
   if (answers[COMPETENCIES[currentStep].id].selected.size === 0) {
     document.getElementById('errMsg').style.display = 'block';
     document.getElementById('errMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -463,12 +515,29 @@ async function submitSurvey() {
   });
 
   try {
+    // Зберігаємо відповіді
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       mode: 'no-cors'
     });
+    // Оновлюємо статус на "завершив"
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'updateStatus',
+        linkId: window.linkId,
+        employee: employeeName,
+        respondent: respondentName,
+        role,
+        status: 'finished'
+      }),
+      mode: 'no-cors'
+    });
+    // Очищаємо збережений прогрес
+    sessionStorage.removeItem(`360_progress_${window.linkId}`);
     document.getElementById('loader').classList.remove('active');
     showScreen('screenThanks');
   } catch (err) {
