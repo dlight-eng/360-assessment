@@ -545,7 +545,8 @@
   <!-- Tabs -->
   <div style="display:flex;gap:4px;margin-bottom:24px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border);">
     <button class="tab-btn active" id="tab-links" onclick="switchTab('links')">🔗 Генератор посилань</button>
-    <button class="tab-btn" id="tab-directory" onclick="switchTab('directory')">👥 Довідник співробітників</button>
+    <button class="tab-btn" id="tab-statuses" onclick="switchTab('statuses')">📋 Статуси</button>
+    <button class="tab-btn" id="tab-directory" onclick="switchTab('directory')">👥 Довідник</button>
   </div>
 
   <!-- TAB: Links -->
@@ -595,6 +596,52 @@
   </div>
   </div><!-- /tabLinks -->
 
+  <!-- TAB: Statuses -->
+  <div id="tabStatuses" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div style="font-size:16px;font-weight:600;">Статуси проходження</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:2px;">Відстеження хто пройшов, хто розпочав, хто не відкривав</div>
+      </div>
+      <button onclick="loadStatuses()" style="padding:8px 18px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;font-family:'Geologica',sans-serif;cursor:pointer;color:var(--text2);">🔄 Оновити</button>
+    </div>
+
+    <!-- Filter -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <select id="filterEmployee" onchange="renderStatuses()" style="padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:13px;color:var(--text);outline:none;">
+        <option value="">Всі співробітники</option>
+      </select>
+      <select id="filterStatus" onchange="renderStatuses()" style="padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:13px;color:var(--text);outline:none;">
+        <option value="">Всі статуси</option>
+        <option value="Не почав">Не почав</option>
+        <option value="Розпочав">Розпочав</option>
+        <option value="Завершив">Завершив</option>
+      </select>
+    </div>
+
+    <!-- Stats summary -->
+    <div id="statusSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
+
+    <!-- Table -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <table style="width:100%;border-collapse:collapse;" id="statusTable">
+        <thead>
+          <tr style="background:var(--surface2);">
+            <th style="padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Респондент</th>
+            <th style="padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Оцінює</th>
+            <th style="padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Роль</th>
+            <th style="padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Статус</th>
+            <th style="padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Час</th>
+            <th style="padding:11px 16px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Дії</th>
+          </tr>
+        </thead>
+        <tbody id="statusTbody">
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3);">Завантаження...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- TAB: Directory -->
   <div id="tabDirectory" style="display:none">
     <div style="max-width:480px">
@@ -620,7 +667,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf3f462Sfb67TowxPLPnSUedTYnfb0mqd1yhgSmEmLsS9AFtZzsG5Vw0OA7CMcLor65Q/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkbNH-nmLGtzdUP0bRP0lv-bBDXRgFVOOwe2hZc1Xr9TDbB9I-y9GUM9v0ZyvIm-AGog/exec';
 
 let employeeCount = 0;
 let respondentCount = 0;
@@ -642,9 +689,133 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ============================================================
 function switchTab(tab) {
   document.getElementById('tabLinks').style.display = tab === 'links' ? 'block' : 'none';
+  document.getElementById('tabStatuses').style.display = tab === 'statuses' ? 'block' : 'none';
   document.getElementById('tabDirectory').style.display = tab === 'directory' ? 'block' : 'none';
   document.getElementById('tab-links').classList.toggle('active', tab === 'links');
+  document.getElementById('tab-statuses').classList.toggle('active', tab === 'statuses');
   document.getElementById('tab-directory').classList.toggle('active', tab === 'directory');
+  if (tab === 'statuses') loadStatuses();
+}
+
+// ============================================================
+// STATUSES
+// ============================================================
+let allStatuses = [];
+
+async function loadStatuses() {
+  document.getElementById('statusTbody').innerHTML =
+    '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3);">Завантаження...</td></tr>';
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=statuses`);
+    const data = await res.json();
+    allStatuses = data.statuses || [];
+    updateStatusFilters();
+    renderStatuses();
+  } catch(e) {
+    document.getElementById('statusTbody').innerHTML =
+      '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--danger);">Помилка завантаження</td></tr>';
+  }
+}
+
+function updateStatusFilters() {
+  const sel = document.getElementById('filterEmployee');
+  const current = sel.value;
+  const employees = [...new Set(allStatuses.map(s => s.employee))].sort();
+  sel.innerHTML = '<option value="">Всі співробітники</option>' +
+    employees.map(e => `<option value="${e}" ${e===current?'selected':''}>${e}</option>`).join('');
+}
+
+function renderStatuses() {
+  const filterEmp = document.getElementById('filterEmployee').value;
+  const filterSt = document.getElementById('filterStatus').value;
+
+  let filtered = allStatuses;
+  if (filterEmp) filtered = filtered.filter(s => s.employee === filterEmp);
+  if (filterSt) filtered = filtered.filter(s => {
+    if (filterSt === 'Не почав') return !s.status || s.status === 'Не почав';
+    return s.status === filterSt;
+  });
+
+  // Summary
+  const total = allStatuses.length;
+  const finished = allStatuses.filter(s => s.status === 'Завершив').length;
+  const started = allStatuses.filter(s => s.status === 'Розпочав').length;
+  const notStarted = total - finished - started;
+
+  document.getElementById('statusSummary').innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">Завершили</div>
+      <div style="font-size:28px;font-weight:700;color:var(--success);font-family:'JetBrains Mono',monospace;">${finished}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px;">з ${total}</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">Розпочали</div>
+      <div style="font-size:28px;font-weight:700;color:#d97706;font-family:'JetBrains Mono',monospace;">${started}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px;">не завершили</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">Не почали</div>
+      <div style="font-size:28px;font-weight:700;color:var(--text3);font-family:'JetBrains Mono',monospace;">${notStarted}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px;">не відкривали</div>
+    </div>`;
+
+  if (!filtered.length) {
+    document.getElementById('statusTbody').innerHTML =
+      '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3);">Немає записів</td></tr>';
+    return;
+  }
+
+  const statusBadge = (s) => {
+    if (!s || s === 'Не почав') return '<span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:#f3f4f6;color:#6b7280">Не почав</span>';
+    if (s === 'Розпочав') return '<span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">Розпочав</span>';
+    if (s === 'Завершив') return '<span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:#d1fae5;color:#065f46">Завершив</span>';
+    return s;
+  };
+
+  const roleBadge = (r) => {
+    const map = { 'Керівник':'#fef3c7|#92400e', 'Колега':'#dbeafe|#1e40af', 'Підлеглий':'#d1fae5|#065f46', 'Самооцінка':'#f3e8ff|#6b21a8' };
+    const [bg, color] = (map[r] || '#f3f4f6|#374151').split('|');
+    return `<span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${bg};color:${color}">${r}</span>`;
+  };
+
+  const formatTime = (iso) => {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('uk-UA', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+    catch(e) { return iso; }
+  };
+
+  document.getElementById('statusTbody').innerHTML = filtered.map(s => `
+    <tr style="border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <td style="padding:12px 16px;font-size:14px;font-weight:500;">${s.respondent || '—'}</td>
+      <td style="padding:12px 16px;font-size:13px;color:var(--text2);">${s.employee}</td>
+      <td style="padding:12px 16px;">${roleBadge(s.role)}</td>
+      <td style="padding:12px 16px;">${statusBadge(s.status)}</td>
+      <td style="padding:12px 16px;font-size:12px;color:var(--text3);">
+        ${s.finishedAt ? '✓ ' + formatTime(s.finishedAt) : s.startedAt ? '→ ' + formatTime(s.startedAt) : '—'}
+      </td>
+      <td style="padding:12px 16px;text-align:center;">
+        <button onclick="deleteLinkEntry('${s.linkId}', this)" style="padding:5px 12px;background:transparent;border:1px solid #fecaca;border-radius:6px;font-size:12px;color:var(--danger);cursor:pointer;font-family:'Geologica',sans-serif;transition:all .15s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">Видалити</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function deleteLinkEntry(linkId, btn) {
+  if (!confirm('Видалити цей запис? Дія незворотна.')) return;
+  btn.textContent = '...';
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deleteLink', linkId }),
+      mode: 'no-cors'
+    });
+    allStatuses = allStatuses.filter(s => s.linkId !== linkId);
+    renderStatuses();
+    showToast('✓ Запис видалено');
+  } catch(e) {
+    btn.textContent = 'Видалити';
+    showToast('⚠ Помилка видалення');
+  }
 }
 
 // ============================================================
