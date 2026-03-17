@@ -176,6 +176,32 @@
     transition: background 0.15s;
   }
 
+  .resp-row {
+    display: block;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .resp-row:last-child { border-bottom: none; }
+  .resp-row:hover { background: rgba(0,0,0,.01); }
+
+  .resp-row select {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Geologica', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+    appearance: auto;
+  }
+
+  .resp-row select:focus { border-color: var(--accent); }
+
   .emp-row:last-child { border-bottom: none; }
   .emp-row:hover { background: rgba(255,255,255,0.02); }
 
@@ -737,9 +763,8 @@ function addRespondent() {
   const id = respondentCount;
   const list = document.getElementById('respondentsList');
   const row = document.createElement('div');
-  row.className = 'emp-row';
+  row.className = 'resp-row';
   row.id = `resp_${id}`;
-  row.style.cssText = 'padding:12px 14px;border-bottom:1px solid var(--border);';
   row.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
       <select id="resp_name_${id}" class="people-select" style="flex:1;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;">
@@ -781,13 +806,12 @@ function getEmployees() {
 
 function getRespondents() {
   const result = [];
-  document.querySelectorAll('.emp-row[id^="resp_"]').forEach(row => {
+  document.querySelectorAll('[id^="resp_"]:not([id^="resp_name"]):not([id^="resp_role"])').forEach(row => {
     const id = row.id.replace('resp_', '');
     const name = document.getElementById(`resp_name_${id}`)?.value.trim();
     const role = document.getElementById(`resp_role_${id}`)?.value || 'colleague';
     if (name) result.push({ name, role });
   });
-  // Deduplicate by name+role
   const seen = new Set();
   return result.filter(r => {
     const key = `${r.name}|${r.role}`;
