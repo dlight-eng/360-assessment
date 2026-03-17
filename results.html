@@ -932,20 +932,24 @@ async function initProgressTab() {
 
 async function loadProgressData() {
   const emp = document.getElementById('progressEmpSelect').value;
-  if (!emp) return;
+  if (!emp) { showProgressEmpty('Оберіть співробітника зі списку'); return; }
 
   document.getElementById('progressEmpty').style.display = 'none';
   document.getElementById('progressResults').style.display = 'none';
   document.getElementById('progressLoading').style.display = 'block';
 
   try {
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=progress&employee=${encodeURIComponent(emp)}`);
+    const url = `${APPS_SCRIPT_URL}?action=progress&employee=${encodeURIComponent(emp)}`;
+    const res = await fetch(url);
     const data = await res.json();
     document.getElementById('progressLoading').style.display = 'none';
 
-    if (!data.progress || data.progress.length < 1) {
-      document.getElementById('progressEmpty').style.display = 'block';
-      document.getElementById('progressEmpty').innerHTML = `<div class="empty"><div class="empty-icon">📭</div><h3>Немає збережених циклів</h3><p>Для ${emp} ще не створено жодного знімку циклу.<br>Перейди в Адмін → Архів циклів.</p></div>`;
+    if (!data.progress || data.progress.length === 0) {
+      let msg = `Для "${emp}" немає збережених періодів.<br>Перейди в <a href="admin.html" style="color:var(--accent)">Адмін → 🗄 Архів циклів</a> і збережи хоча б 2 періоди.`;
+      if (data.availableEmployees && data.availableEmployees.length) {
+        msg += `<br><br><small style="color:var(--text3)">В архіві є записи для: ${data.availableEmployees.join(', ')}</small>`;
+      }
+      showProgressEmpty(msg);
       return;
     }
 
@@ -955,8 +959,14 @@ async function loadProgressData() {
     document.getElementById('progressResults').style.display = 'block';
   } catch(err) {
     document.getElementById('progressLoading').style.display = 'none';
-    document.getElementById('progressEmpty').style.display = 'block';
+    showProgressEmpty(`Помилка завантаження: ${err.message}`);
   }
+}
+
+function showProgressEmpty(msg) {
+  const el = document.getElementById('progressEmpty');
+  el.style.display = 'block';
+  el.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><h3>Немає даних</h3><p>${msg}</p></div>`;
 }
 
 function renderCycleCheckboxes() {
