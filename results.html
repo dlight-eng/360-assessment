@@ -165,6 +165,10 @@
   .ai-text ul{padding-left:18px;margin-bottom:10px;}
   .ai-text ul li{margin-bottom:5px;}
   .ai-text strong{color:var(--text);font-weight:600;}
+  .ai-text table th{padding:7px 10px;text-align:left;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2);}
+  .ai-text table td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:13px;}
+  .ai-text table tr:last-child td{border-bottom:none;}
+  .ai-text table tr:hover td{background:var(--surface2);}
 
   .ai-error{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px 16px;font-size:13px;color:var(--danger);}
 </style>
@@ -548,21 +552,120 @@ async function generateSummary() {
   }
 }
 
-function formatAIText(text) {
-  // Convert markdown to HTML
+function formatAIText(raw) {
+  // Split into sections by ## headers
+  const sectionDefs = [
+    { re: /## 🌟/, cls: 'overall',   icon: '🌟' },
+    { re: /## 💪/, cls: 'strengths', icon: '💪' },
+    { re: /## 📈/, cls: 'growth',    icon: '📈' },
+    { re: /## 👥/, cls: 'gaps',      icon: '👥' },
+    { re: /## 🎯/, cls: 'recs',      icon: '🎯' },
+  ];
+
+  // Split text into lines
+  const lines = raw.split('\n');
+  let html = '';
+  let inSection = false;
+  let inList = false;
+  let inTable = false;
+  let tableRows = [];
+
+  const closeList = () => {
+    if (inList) { html += '</ul>'; inList = false; }
+  };
+
+  const closeTable = () => {
+    if (inTable && tableRows.length) {
+      // First row = header, second = separator, rest = data
+      let th = '';
+      let tbody = '';
+      tableRows.forEach((row, i) => {
+        const cells = row.split('|').map(c => c.trim()).filter(c => c && !c.match(/^[-:]+$/));
+        if (i === 0) {
+          th = cells.map(c => `<th>${renderInline(c)}</th>`).join('');
+        } else if (!row.match(/^\|?[\s\-:]+\|/)) {
+          tbody += '<tr>' + cells.map(c => `<td>${renderInline(c)}</td>`).join('') + '</tr>';
+        }
+      });
+      html += `<div style="overflow-x:auto;margin:10px 0"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead style="background:var(--surface2)"><tr>${th}</tr></thead>
+        <tbody>${tbody}</tbody>
+      </table></div>`;
+      tableRows = [];
+      inTable = false;
+    }
+  };
+
+  const closeSection = () => {
+    closeList();
+    closeTable();
+    if (inSection) { html += '</div></div>'; inSection = false; }
+  };
+
+  lines.forEach(line => {
+    // Section header
+    const secDef = sectionDefs.find(s => s.re.test(line));
+    if (secDef) {
+      closeSection();
+      const title = line.replace(/^## [^\s]+ /, '').trim();
+      html += `<div class="ai-section"><div class="ai-section-title ${secDef.cls}"><span class="icon">${secDef.icon}</span>${title}</div><div class="ai-text">`;
+      inSection = true;
+      return;
+    }
+
+    // Generic ## header (###)
+    if (line.startsWith('### ')) {
+      closeList(); closeTable();
+      html += `<p><strong>${renderInline(line.slice(4))}</strong></p>`;
+      return;
+    }
+
+    // Table row
+    if (line.trim().startsWith('|')) {
+      closeList();
+      inTable = true;
+      tableRows.push(line.trim());
+      return;
+    } else if (inTable) {
+      closeTable();
+    }
+
+    // List item
+    if (line.match(/^[\-\*] /)) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += `<li>${renderInline(line.slice(2))}</li>`;
+      return;
+    }
+
+    // Numbered list
+    if (line.match(/^\d+\. /)) {
+      closeList();
+      html += `<p style="margin-bottom:6px">${renderInline(line)}</p>`;
+      return;
+    }
+
+    // Empty line
+    if (!line.trim()) {
+      closeList(); closeTable();
+      return;
+    }
+
+    // Normal paragraph line
+    closeList(); closeTable();
+    html += `<p>${renderInline(line)}</p>`;
+  });
+
+  closeSection();
+  return html;
+}
+
+function renderInline(text) {
   return text
-    .replace(/## 🌟 ([^\n]+)/g, '<div class="ai-section"><div class="ai-section-title overall"><span class="icon">🌟</span>$1</div><div class="ai-text">')
-    .replace(/## 💪 ([^\n]+)/g, '</div></div><div class="ai-section"><div class="ai-section-title strengths"><span class="icon">💪</span>$1</div><div class="ai-text">')
-    .replace(/## 📈 ([^\n]+)/g, '</div></div><div class="ai-section"><div class="ai-section-title growth"><span class="icon">📈</span>$1</div><div class="ai-text">')
-    .replace(/## 👥 ([^\n]+)/g, '</div></div><div class="ai-section"><div class="ai-section-title gaps"><span class="icon">👥</span>$1</div><div class="ai-text">')
-    .replace(/## 🎯 ([^\n]+)/g, '</div></div><div class="ai-section"><div class="ai-section-title recs"><span class="icon">🎯</span>$1</div><div class="ai-text">')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
-    .replace(/<\/ul>\s*<ul>/g, '')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, ' ')
-    + '</div></div>';
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/⚠️?/g, '<span style="color:#d97706">⚠</span>')
+    .replace(/✅/g, '<span style="color:#059669">✓</span>')
+    .replace(/❌/g, '<span style="color:#dc2626">✗</span>');
 }
 </script>
 </body>
