@@ -770,7 +770,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzGHEFCi12g7kKGnZHbDs_v6oZ4L-1TnxtxO3zioK9NBGMCtsVthKJHoc9-bofikG37g/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZxddx1sRBdS7JG2miNjRpvWwU0j6Urs7UZJCOptgoM6Xwvw9IyMC4Dma-R0W4rZtnKQ/exec';
 
 let employeeCount = 0;
 let respondentCount = 0;
@@ -1415,11 +1415,13 @@ async function saveSelectedResponses() {
   resultEl.style.display = 'none';
 
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'saveCycleFromRows', cycleName, employee: emp, rowIndexes })
+    const params = new URLSearchParams({
+      action: 'saveCycleFromRows',
+      cycleName,
+      employee: emp,
+      rowIndexes: rowIndexes.join(',')
     });
+    const res = await fetch(`${APPS_SCRIPT_URL}?${params}`);
     const data = await res.json();
 
     if (data.status === 'ok') {
