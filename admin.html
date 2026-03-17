@@ -549,39 +549,16 @@
 
         <div class="panel-title" style="margin-top:16px">Респонденти (хто оцінює)</div>
         <div class="employees-wrap">
-          <div class="emp-header" style="grid-template-columns:1fr auto">
+          <div class="emp-header" style="grid-template-columns:1fr 130px auto">
             <span>Прізвище Ім'я</span>
+            <span>Роль</span>
             <span></span>
           </div>
           <div id="respondentsList"></div>
         </div>
         <button class="btn-add-emp" onclick="addRespondent()">+ Додати респондента</button>
 
-        <div class="panel-title">Ролі респондентів</div>
-        <div class="roles-grid">
-          <label class="role-check active" id="check-manager">
-            <input type="checkbox" checked onchange="toggleRole('manager')">
-            <div class="role-dot manager"></div>
-            <span class="role-label">Керівник</span>
-          </label>
-          <label class="role-check active" id="check-colleague">
-            <input type="checkbox" checked onchange="toggleRole('colleague')">
-            <div class="role-dot colleague"></div>
-            <span class="role-label">Колеги</span>
-          </label>
-          <label class="role-check active" id="check-subordinate">
-            <input type="checkbox" checked onchange="toggleRole('subordinate')">
-            <div class="role-dot subordinate"></div>
-            <span class="role-label">Підлеглі</span>
-          </label>
-          <label class="role-check active" id="check-self">
-            <input type="checkbox" checked onchange="toggleRole('self')">
-            <div class="role-dot" style="background:#7c3aed"></div>
-            <span class="role-label">Самооцінка</span>
-          </label>
-        </div>
-
-        <button class="btn-generate" onclick="generate()">⚡ Згенерувати посилання</button>
+        <button class="btn-generate" onclick="generate()" style="margin-top:20px">⚡ Згенерувати посилання</button>
       </div>
     </div>
 
@@ -766,11 +743,17 @@ function addRespondent() {
   const row = document.createElement('div');
   row.className = 'emp-row';
   row.id = `resp_${id}`;
-  row.style.gridTemplateColumns = '1fr auto';
+  row.style.gridTemplateColumns = '1fr 130px auto';
   row.innerHTML = `
     <select id="resp_name_${id}" class="people-select" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-family:'Geologica',sans-serif;font-size:13px;color:var(--text);outline:none;">
       <option value="">— Оберіть —</option>
       ${peopleList.map(n=>`<option value="${n}">${n}</option>`).join('')}
+    </select>
+    <select id="resp_role_${id}" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-family:'Geologica',sans-serif;font-size:13px;color:var(--text);outline:none;">
+      <option value="colleague">Колега</option>
+      <option value="manager">Керівник</option>
+      <option value="subordinate">Підлеглий</option>
+      <option value="self">Самооцінка</option>
     </select>
     <button class="emp-del" onclick="removeRespondent(${id})" title="Видалити">×</button>`;
   list.appendChild(row);
@@ -802,10 +785,18 @@ function getRespondents() {
   const result = [];
   document.querySelectorAll('.emp-row[id^="resp_"]').forEach(row => {
     const id = row.id.replace('resp_', '');
-    const val = document.getElementById(`resp_name_${id}`)?.value.trim();
-    if (val) result.push(val);
+    const name = document.getElementById(`resp_name_${id}`)?.value.trim();
+    const role = document.getElementById(`resp_role_${id}`)?.value || 'colleague';
+    if (name) result.push({ name, role });
   });
-  return [...new Set(result)];
+  // Deduplicate by name+role
+  const seen = new Set();
+  return result.filter(r => {
+    const key = `${r.name}|${r.role}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 // ============================================================
@@ -821,11 +812,8 @@ function generate() {
   if (!employees.length) { showToast('⚠ Оберіть хоча б одного співробітника'); return; }
   if (!respondents.length) { showToast('⚠ Оберіть хоча б одного респондента'); return; }
 
-  const activeRoles = Object.entries(roles).filter(([,v])=>v).map(([k])=>k);
-  if (!activeRoles.length) { showToast('⚠ Оберіть хоча б одну роль'); return; }
-
   const panel = document.getElementById('resultsPanel');
-  const totalLinks = respondents.length * employees.length * activeRoles.length;
+  const totalLinks = respondents.length * employees.length;
   panel.innerHTML = `
     <div class="results-header">
       <h2>Посилання <span style="color:var(--text3);font-weight:400;font-size:14px">(${totalLinks} посилань)</span></h2>
@@ -835,50 +823,44 @@ function generate() {
 
   const blocks = document.getElementById('resultsBlocks');
 
-  respondents.forEach(respName => {
-    const encodedResp = encodeURIComponent(respName);
-    const initials = respName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  respondents.forEach(resp => {
+    const encodedResp = encodeURIComponent(resp.name);
+    const initials = resp.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const roleBg = { manager:'#fef3c7', colleague:'#dbeafe', subordinate:'#d1fae5', self:'#f3e8ff' }[resp.role] || '#f9fafb';
+    const roleClr = { manager:'#92400e', colleague:'#1e40af', subordinate:'#065f46', self:'#6b21a8' }[resp.role] || '#374151';
+    const roleAccent = { manager:'#d97706', colleague:'#2563eb', subordinate:'#059669', self:'#7c3aed' }[resp.role] || '#9ca3af';
 
-        const linksHtml = employees.map(empName => {
+    const linksHtml = employees.map(empName => {
       const encodedEmp = encodeURIComponent(empName);
-      return activeRoles.map(role => {
-        const url = `${baseUrl}/?employee=${encodedEmp}&role=${role}&respondent=${encodedResp}`;
-        return `<div class="link-row" style="flex-direction:column;align-items:flex-start;gap:8px;padding:12px 16px;">
-          <div style="display:flex;align-items:center;gap:10px;width:100%;">
-            <span class="link-role-badge ${role}">${roleLabels[role]}</span>
-            <span style="font-size:13px;color:var(--text);font-weight:500;">${empName}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;width:100%;">
-            <div style="flex:1;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);background:var(--surface2);padding:7px 10px;border-radius:6px;border:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${url}</div>
-            <button class="btn-copy-link" onclick="copyLink(this,\`${url}\`)" title="Копіювати">⎘</button>
-          </div>
-        </div>`;
-      }).join('');
+      const url = `${baseUrl}/?employee=${encodedEmp}&role=${resp.role}&respondent=${encodedResp}`;
+      return `<div style="padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+        <span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${roleBg};color:${roleClr};flex-shrink:0">${roleLabels[resp.role]}</span>
+        <span style="font-size:13px;font-weight:500;color:var(--text);flex:1">${empName}</span>
+        <button onclick="copyLink(this,\`${url}\`)" style="padding:6px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-size:12px;font-weight:500;font-family:'Geologica',sans-serif;cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">⎘ Скопіювати</button>
+      </div>`;
     }).join('');
 
     const allLinks = employees.map(empName => {
       const encodedEmp = encodeURIComponent(empName);
-      return activeRoles.map(role => {
-        const url = `${baseUrl}/?employee=${encodedEmp}&role=${role}&respondent=${encodedResp}`;
-        return `${empName} / ${roleLabels[role]}: ${url}`;
-      }).join('\n');
+      const url = `${baseUrl}/?employee=${encodedEmp}&role=${resp.role}&respondent=${encodedResp}`;
+      return `${empName}: ${url}`;
     }).join('\n');
 
     const block = document.createElement('div');
     block.className = 'result-employee';
-    block.dataset.respondent = respName;
+    block.dataset.respondent = resp.name;
     block.innerHTML = `
       <div class="result-emp-header">
         <div class="result-avatar">${initials}</div>
         <div>
-          <div class="result-emp-name">${respName}</div>
-          <div class="result-emp-sub">оцінює ${employees.length} співроб. · ${activeRoles.length} ролі</div>
+          <div class="result-emp-name">${resp.name}</div>
+          <div class="result-emp-sub" style="color:${roleAccent}">${roleLabels[resp.role]} · ${employees.length} посилань</div>
         </div>
         <div class="result-emp-actions">
           <button class="btn-copy-emp" onclick="copyBlock(this,\`${allLinks}\`)">Копіювати блок</button>
         </div>
       </div>
-      <div class="link-rows">${linksHtml}</div>`;
+      ${linksHtml}`;
     blocks.appendChild(block);
   });
 
