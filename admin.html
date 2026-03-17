@@ -662,57 +662,87 @@
 
   <!-- TAB: Archive -->
   <div id="tabArchive" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
 
-      <!-- Зберегти новий цикл -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:16px;">💾 Зберегти знімок циклу</div>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6;">Збережіть поточні результати як окремий цикл. Система відбере відповіді за вказаний діапазон дат.</p>
-
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div>
-            <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;">Назва циклу</label>
-            <input type="text" id="cycleName" placeholder="наприклад: I квартал 2025"
-              style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;"
-              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div>
-              <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;">Дата з</label>
-              <input type="date" id="cycleFrom"
-                style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;"
-                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-            </div>
-            <div>
-              <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;">Дата по</label>
-              <input type="date" id="cycleTo"
-                style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;"
-                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-            </div>
-          </div>
-          <button onclick="saveCycleSnapshot()" id="btnSaveCycle"
-            style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;transition:all .17s;box-shadow:0 3px 10px rgba(37,99,235,.22);"
-            onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='var(--accent)'">
-            💾 Зберегти знімок
-          </button>
-          <div id="cycleResult" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;"></div>
-        </div>
-      </div>
-
-      <!-- Список збережених циклів -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;">📋 Збережені цикли</div>
-          <button onclick="loadCycles()" style="font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">🔄 Оновити</button>
-        </div>
-        <div id="cyclesList">
-          <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">
-            <div style="font-size:28px;margin-bottom:8px;">🗄</div>
-            Завантаження...
-          </div>
+    <!-- Step 1: Select employee -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:14px;">Крок 1 — Оберіть співробітника</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;">
+        <div style="flex:1;">
+          <select id="archiveEmpSelect" onchange="loadEmployeeResponses()"
+            style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;">
+            <option value="">— Оберіть співробітника —</option>
+          </select>
         </div>
       </div>
     </div>
+
+    <!-- Step 2: Select responses -->
+    <div id="archiveResponsesWrap" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;">Крок 2 — Виберіть відповіді для збереження</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="selectAllResponses(true)" style="font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;font-family:'Geologica',sans-serif;color:var(--text2);">Вибрати всі</button>
+          <button onclick="selectAllResponses(false)" style="font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;font-family:'Geologica',sans-serif;color:var(--text2);">Скинути</button>
+        </div>
+      </div>
+
+      <div id="archiveResponsesLoading" style="text-align:center;padding:30px;color:var(--text3);">
+        <div style="font-size:24px;margin-bottom:8px">⏳</div>Завантаження...
+      </div>
+
+      <div id="archiveResponsesTable" style="display:none;overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;" id="responsesTable">
+          <thead>
+            <tr style="background:var(--surface2);">
+              <th style="padding:10px 12px;border-bottom:1px solid var(--border);width:36px;"></th>
+              <th style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;">Дата</th>
+              <th style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;">Роль</th>
+              <th style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;">Респондент</th>
+              <th style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;">Бал</th>
+            </tr>
+          </thead>
+          <tbody id="responsesBody"></tbody>
+        </table>
+        <div id="selectedCountInfo" style="margin-top:10px;font-size:13px;color:var(--text2);text-align:right;padding-right:4px;"></div>
+      </div>
+
+      <div id="archiveNoResponses" style="display:none;text-align:center;padding:30px;color:var(--text3);">
+        Немає відповідей для цього співробітника
+      </div>
+    </div>
+
+    <!-- Step 3: Save as period -->
+    <div id="archiveSaveWrap" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:14px;">Крок 3 — Збережіть як період</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;">
+        <div style="flex:1;">
+          <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;">Назва періоду</label>
+          <input type="text" id="archiveCycleName" placeholder="наприклад: I квартал 2025"
+            style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <button onclick="saveSelectedResponses()" id="btnArchiveSave"
+          style="padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 3px 10px rgba(37,99,235,.22);transition:all .17s;"
+          onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='var(--accent)'">
+          💾 Зберегти період
+        </button>
+      </div>
+      <div id="archiveSaveResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;"></div>
+    </div>
+
+    <!-- Saved cycles list -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 28px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;">📋 Збережені періоди</div>
+        <button onclick="loadCycles()" style="font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">🔄 Оновити</button>
+      </div>
+      <div id="cyclesList">
+        <div style="text-align:center;padding:30px;color:var(--text3);font-size:13px;">
+          <div style="font-size:28px;margin-bottom:8px;">🗄</div>Завантаження...
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- TAB: Directory -->
@@ -740,7 +770,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZ1vUGXBKKS03R1MINIEVYn8uE57JkDEpouuYUkVe9MB7bWx8MWUb3CbLqAWs7dEw8rQ/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzGHEFCi12g7kKGnZHbDs_v6oZ4L-1TnxtxO3zioK9NBGMCtsVthKJHoc9-bofikG37g/exec';
 
 let employeeCount = 0;
 let respondentCount = 0;
@@ -770,7 +800,7 @@ function switchTab(tab) {
   document.getElementById('tab-archive').classList.toggle('active', tab === 'archive');
   document.getElementById('tab-directory').classList.toggle('active', tab === 'directory');
   if (tab === 'statuses') loadStatuses();
-  if (tab === 'archive') loadCycles();
+  if (tab === 'archive') initArchiveTab();
 }
 
 // ============================================================
@@ -1277,15 +1307,108 @@ window.addEventListener('click', e => {
 // ============================================================
 // АРХІВ ЦИКЛІВ
 // ============================================================
-async function saveCycleSnapshot() {
-  const name = document.getElementById('cycleName').value.trim();
-  const from = document.getElementById('cycleFrom').value;
-  const to = document.getElementById('cycleTo').value;
-  const resultEl = document.getElementById('cycleResult');
-  const btn = document.getElementById('btnSaveCycle');
+let archiveResponses = []; // всі відповіді поточного співробітника
 
-  if (!name) { showToast('⚠ Введіть назву циклу'); return; }
-  if (!from || !to) { showToast('⚠ Вкажіть діапазон дат'); return; }
+async function initArchiveTab() {
+  // Завантажуємо список співробітників
+  const sel = document.getElementById('archiveEmpSelect');
+  if (sel.options.length <= 1) {
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=employees`);
+      const data = await res.json();
+      (data.employees || []).forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.name; opt.textContent = `${e.name} (${e.count} відп.)`;
+        sel.appendChild(opt);
+      });
+    } catch(e) {}
+  }
+  loadCycles();
+}
+
+async function loadEmployeeResponses() {
+  const emp = document.getElementById('archiveEmpSelect').value;
+  if (!emp) return;
+
+  document.getElementById('archiveResponsesWrap').style.display = 'block';
+  document.getElementById('archiveSaveWrap').style.display = 'none';
+  document.getElementById('archiveResponsesLoading').style.display = 'block';
+  document.getElementById('archiveResponsesTable').style.display = 'none';
+  document.getElementById('archiveNoResponses').style.display = 'none';
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=responses&employee=${encodeURIComponent(emp)}`);
+    const data = await res.json();
+    archiveResponses = data.responses || [];
+
+    document.getElementById('archiveResponsesLoading').style.display = 'none';
+
+    if (!archiveResponses.length) {
+      document.getElementById('archiveNoResponses').style.display = 'block';
+      return;
+    }
+
+    renderResponsesTable();
+    document.getElementById('archiveResponsesTable').style.display = 'block';
+    document.getElementById('archiveSaveWrap').style.display = 'block';
+  } catch(e) {
+    document.getElementById('archiveResponsesLoading').style.display = 'none';
+    document.getElementById('archiveNoResponses').style.display = 'block';
+    document.getElementById('archiveNoResponses').textContent = 'Помилка завантаження: ' + e.message;
+  }
+}
+
+function renderResponsesTable() {
+  const roleBadgeHtml = (role) => {
+    const map = { 'Керівник':'#fef3c7|#92400e', 'Колега':'#dbeafe|#1e40af', 'Підлеглий':'#d1fae5|#065f46', 'Самооцінка':'#f3e8ff|#6b21a8' };
+    const [bg, color] = (map[role] || '#f3f4f6|#374151').split('|');
+    return `<span style="padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600;background:${bg};color:${color}">${role}</span>`;
+  };
+
+  const scoreColor = (s) => s >= 4 ? 'var(--success)' : s >= 3 ? 'var(--accent)' : s >= 2 ? '#d97706' : 'var(--danger)';
+
+  document.getElementById('responsesBody').innerHTML = archiveResponses.map((r, i) => `
+    <tr style="border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <td style="padding:10px 12px;text-align:center;">
+        <input type="checkbox" data-idx="${i}" onchange="updateSelectedCount()"
+          style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);">
+      </td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--text2);">${r.date}</td>
+      <td style="padding:10px 12px;">${roleBadgeHtml(r.role)}</td>
+      <td style="padding:10px 12px;font-size:13px;">${r.respondent}</td>
+      <td style="padding:10px 12px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:${scoreColor(r.overall)}">${r.overall ?? '—'}</td>
+    </tr>`).join('');
+
+  updateSelectedCount();
+}
+
+function selectAllResponses(val) {
+  document.querySelectorAll('#responsesBody input[type="checkbox"]').forEach(cb => cb.checked = val);
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const selected = document.querySelectorAll('#responsesBody input[type="checkbox"]:checked').length;
+  const total = archiveResponses.length;
+  document.getElementById('selectedCountInfo').textContent =
+    `Вибрано: ${selected} з ${total} відповідей`;
+  document.getElementById('archiveSaveWrap').style.display = total > 0 ? 'block' : 'none';
+}
+
+function getSelectedRowIndexes() {
+  return [...document.querySelectorAll('#responsesBody input[type="checkbox"]:checked')]
+    .map(cb => archiveResponses[parseInt(cb.dataset.idx)].rowIndex);
+}
+
+async function saveSelectedResponses() {
+  const emp = document.getElementById('archiveEmpSelect').value;
+  const cycleName = document.getElementById('archiveCycleName').value.trim();
+  const rowIndexes = getSelectedRowIndexes();
+  const resultEl = document.getElementById('archiveSaveResult');
+  const btn = document.getElementById('btnArchiveSave');
+
+  if (!cycleName) { showToast('⚠ Введіть назву періоду'); return; }
+  if (!rowIndexes.length) { showToast('⚠ Виберіть хоча б одну відповідь'); return; }
 
   btn.textContent = '⏳ Збереження...';
   btn.disabled = true;
@@ -1295,27 +1418,27 @@ async function saveCycleSnapshot() {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'saveCycle', cycleName: name, dateFrom: from, dateTo: to })
+      body: JSON.stringify({ action: 'saveCycleFromRows', cycleName, employee: emp, rowIndexes })
     });
     const data = await res.json();
 
     if (data.status === 'ok') {
-      resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;';
-      resultEl.textContent = `✓ Цикл "${name}" збережено. Записано ${data.saved} співробітників за період ${from} — ${to}.`;
-      document.getElementById('cycleName').value = '';
-      document.getElementById('cycleFrom').value = '';
-      document.getElementById('cycleTo').value = '';
+      resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;margin-top:12px;';
+      resultEl.textContent = `✓ Збережено як "${cycleName}" для ${emp}. ${rowIndexes.length} відповідей. Загальний бал: ${data.overall}/5`;
+      document.getElementById('archiveCycleName').value = '';
+      // Знімаємо вибрані чекбокси
+      selectAllResponses(false);
       loadCycles();
     } else {
-      resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;';
+      resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;margin-top:12px;';
       resultEl.textContent = `⚠ ${data.message}`;
     }
   } catch(e) {
-    resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;';
+    resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;margin-top:12px;';
     resultEl.textContent = `⚠ Помилка: ${e.message}`;
   }
 
-  btn.textContent = '💾 Зберегти знімок';
+  btn.textContent = '💾 Зберегти період';
   btn.disabled = false;
 }
 
@@ -1328,7 +1451,7 @@ async function loadCycles() {
     const cycles = data.cycles || [];
 
     if (!cycles.length) {
-      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;"><div style="font-size:28px;margin-bottom:8px;">🗄</div>Немає збережених циклів</div>';
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px;"><div style="font-size:28px;margin-bottom:8px;">🗄</div>Немає збережених періодів</div>';
       return;
     }
 
@@ -1339,8 +1462,9 @@ async function loadCycles() {
           <div style="font-size:14px;font-weight:600;">${c.name}</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px;">збережено ${c.date}</div>
         </div>
-        <a href="results.html#progress" style="font-size:12px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid var(--accent);border-radius:6px;transition:all .15s;" onmouseover="this.style.background='var(--accent)';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='var(--accent)'">📈 Прогрес</a>
-      </div>`).join('') + `<div style="margin-top:12px;font-size:12px;color:var(--text3);text-align:center;">Всього циклів: ${cycles.length}</div>`;
+        <a href="results.html" style="font-size:12px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid var(--accent);border-radius:6px;transition:all .15s;" onmouseover="this.style.background='var(--accent)';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='var(--accent)'">📈 Прогрес</a>
+      </div>`).join('') +
+      `<div style="margin-top:12px;font-size:12px;color:var(--text3);text-align:center;">Всього періодів: ${cycles.length}</div>`;
   } catch(e) {
     el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);font-size:13px;">Помилка завантаження</div>';
   }
