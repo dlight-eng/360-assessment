@@ -171,6 +171,75 @@
   .ai-text table tr:hover td{background:var(--surface2);}
 
   .ai-error{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px 16px;font-size:13px;color:var(--danger);}
+
+  /* PDF Export button */
+  .btn-pdf{
+    display:flex;align-items:center;gap:8px;
+    padding:9px 20px;background:var(--success);color:#fff;border:none;
+    border-radius:9px;font-size:13px;font-weight:600;font-family:'Geologica',sans-serif;
+    cursor:pointer;transition:all .17s;box-shadow:0 3px 10px rgba(5,150,105,.22);
+  }
+  .btn-pdf:hover{background:#047857;transform:translateY(-1px);}
+
+  /* ============================================================
+     PRINT / PDF STYLES
+  ============================================================ */
+  @media print {
+    @page { margin: 15mm 12mm; size: A4; }
+
+    body { background: #fff !important; font-size: 12px; }
+    .app { padding: 0; max-width: 100%; }
+
+    /* Сховати непотрібне */
+    .header, .selector-wrap, #loadingState, #emptyState,
+    .nav-links, .btn-load, .btn-ai, .btn-pdf,
+    #btnAI, .pdf-hide { display: none !important; }
+
+    /* Показати тільки результати */
+    .results { display: block !important; }
+
+    /* PDF шапка */
+    .pdf-header {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #2563eb;
+      margin-bottom: 20px;
+    }
+    .pdf-header h1 { font-size: 18px; font-weight: 700; color: #111827; }
+    .pdf-header p { font-size: 12px; color: #6b7280; margin-top: 3px; }
+    .pdf-header .pdf-logo {
+      font-size: 11px; color: #9ca3af; text-align: right;
+    }
+
+    /* Панелі */
+    .panel {
+      border: 1px solid #dde3f0 !important;
+      box-shadow: none !important;
+      break-inside: avoid;
+      margin-bottom: 14px !important;
+    }
+    .grid2 { grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+    /* Радар */
+    .radar-wrap { height: 240px !important; }
+
+    /* Таблиця */
+    .comp-table th, .comp-table td { font-size: 11px; padding: 7px 10px; }
+
+    /* Коментарі */
+    .comment-card { break-inside: avoid; }
+
+    /* AI висновок */
+    #aiPanel { break-before: page; }
+    .ai-section { break-inside: avoid; }
+    .ai-text { font-size: 12px; }
+
+    /* Bars */
+    .comp-label { font-size: 11px; width: 140px; }
+    .comp-score { font-size: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -220,6 +289,18 @@
   <!-- Results -->
   <div class="results" id="results">
 
+    <!-- PDF-only header (прихований на екрані) -->
+    <div class="pdf-header" style="display:none">
+      <div>
+        <h1 id="pdfTitle">Звіт 360°</h1>
+        <p id="pdfSubtitle">Оцінка компетенцій</p>
+      </div>
+      <div class="pdf-logo">
+        BPI Group<br>
+        <span id="pdfDate"></span>
+      </div>
+    </div>
+
     <!-- Employee header -->
     <div class="emp-header" id="empHeader"></div>
 
@@ -250,12 +331,15 @@
 
     <!-- AI Summary -->
     <div class="panel" id="aiPanel" style="margin-bottom:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
         <div>
           <div class="panel-title" style="margin-bottom:4px">AI-висновок</div>
           <div style="font-size:13px;color:var(--text2);">Автоматичний аналіз результатів на основі даних оцінки</div>
         </div>
-        <button class="btn-ai" id="btnAI" onclick="generateSummary()">✨ Згенерувати висновок</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-ai" id="btnAI" onclick="generateSummary()">✨ Згенерувати висновок</button>
+          <button class="btn-pdf pdf-hide" id="btnPDF" onclick="exportPDF()" style="display:none">📄 Зберегти PDF</button>
+        </div>
       </div>
       <div id="aiContent">
         <div style="text-align:center;padding:32px 20px;color:var(--text3);font-size:14px;">
@@ -343,13 +427,19 @@ function renderResults(data) {
 
   currentData = data;
 
-  // Reset AI panel
+  // Update PDF header
+  document.getElementById('pdfTitle').textContent = `Звіт 360° — ${data.employee}`;
+  document.getElementById('pdfSubtitle').textContent = `Оцінка компетенцій · ${data.totalResponses} респондентів`;
+  document.getElementById('pdfDate').textContent = new Date().toLocaleDateString('uk-UA', {day:'2-digit',month:'long',year:'numeric'});
+
+  // Reset AI panel and hide PDF button
   document.getElementById('aiContent').innerHTML = `
     <div style="text-align:center;padding:32px 20px;color:var(--text3);font-size:14px;">
       Натисніть кнопку щоб отримати детальний аналіз результатів
     </div>`;
   document.getElementById('btnAI').disabled = false;
   document.getElementById('btnAI').textContent = '✨ Згенерувати висновок';
+  document.getElementById('btnPDF').style.display = 'none';
 
   const comps = COMP_ORDER.map(id => data.competencies[id]);
   const roles = ['Керівник','Колега','Підлеглий'].filter(r => data.byRole && data.byRole[r]);
@@ -544,12 +634,59 @@ async function generateSummary() {
     content.innerHTML = `<div class="ai-result">${formatAIText(text)}</div>`;
     btn.textContent = '🔄 Оновити висновок';
     btn.disabled = false;
+    // Показати кнопку PDF
+    document.getElementById('btnPDF').style.display = 'flex';
 
   } catch(err) {
     content.innerHTML = `<div class="ai-error">Помилка генерації: ${err.message}</div>`;
     btn.textContent = '✨ Спробувати знову';
     btn.disabled = false;
   }
+}
+
+// ============================================================
+// PDF EXPORT
+// ============================================================
+function exportPDF() {
+  // Конвертуємо радарну діаграму в PNG перед друком
+  const canvas = document.getElementById('radarChart');
+  if (canvas && radarInstance) {
+    // Зберігаємо canvas як img для коректного друку
+    let img = document.getElementById('radarPrintImg');
+    if (!img) {
+      img = document.createElement('img');
+      img.id = 'radarPrintImg';
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:none;';
+      canvas.parentNode.appendChild(img);
+    }
+    img.src = canvas.toDataURL('image/png', 1.0);
+
+    // При друку — показати img, сховати canvas
+    const style = document.createElement('style');
+    style.id = 'printSwapStyle';
+    style.textContent = `
+      @media print {
+        #radarChart { display: none !important; }
+        #radarPrintImg { display: block !important; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Назва файлу через document.title
+  const prevTitle = document.title;
+  if (currentData) {
+    document.title = `Звіт 360° — ${currentData.employee} — ${new Date().toLocaleDateString('uk-UA')}`;
+  }
+
+  window.print();
+
+  // Відновлюємо після друку
+  setTimeout(() => {
+    document.title = prevTitle;
+    const s = document.getElementById('printSwapStyle');
+    if (s) s.remove();
+  }, 1000);
 }
 
 function formatAIText(raw) {
