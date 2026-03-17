@@ -256,7 +256,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-UkKj9_ZS_rxXFIIxT-vF1kQrlnyCdrG2JQ1yqGvRpVszVs2yngZmGTpI2Mw_ImZ0jg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAFcGGc-NoPHHaXWZKnFg7Gfj-z_Oe11nGfaXjd-3mMX5Dr5SVUWepD-EIxQDbd_Ap1A/exec';
 
 const COMP_ORDER = ['risk','time','digital','strategic','delegation','resilience',
                     'responsibility','engagement','initiative','development'];
@@ -520,46 +520,8 @@ async function generateAI() {
   btn.textContent = 'Генерується...';
   content.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div>Аналізую та порівнюю компетенції...</div>';
 
-  // Build comparison summary for prompt
-  const compSummary = COMP_ORDER.map(id => {
-    const scores = selectedEmployees.map(emp => {
-      const s = comparisonData[emp]?.competencies?.[id]?.overall;
-      return s ? `${emp}: ${s}` : null;
-    }).filter(Boolean).join(', ');
-    return `- ${COMP_NAMES[id]}: ${scores}`;
-  }).join('\n');
-
-  const avgSummary = selectedEmployees.map(emp => {
-    const data = comparisonData[emp];
-    const scores = COMP_ORDER.map(id => data?.competencies?.[id]?.overall).filter(s=>s);
-    const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : 'н/д';
-    return `${emp}: ${avg}/5`;
-  }).join(', ');
-
-  const prompt = `Ти — HR-аналітик. Порівняй результати оцінки 360° для групи співробітників українською мовою. НЕ використовуй markdown таблиці.
-
-ЗАГАЛЬНІ СЕРЕДНІ: ${avgSummary}
-
-БАЛИ ПО КОМПЕТЕНЦІЯХ (шкала 1-5):
-${compSummary}
-
-Надай структурований аналіз:
-
-## 🏆 Загальна картина
-2-3 речення про групу в цілому.
-
-## 🥇 Лідери по компетенціях
-Хто найсильніший в яких компетенціях і чому це важливо.
-
-## 📊 Ключові розбіжності
-Де найбільші відмінності між співробітниками і що це означає для команди.
-
-## 🎯 Рекомендації
-3-5 конкретних кроків для розвитку команди з урахуванням індивідуальних сильних сторін.`;
-
   try {
-    // Використовуємо той самий Apps Script endpoint
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=compareAI&employees=${encodeURIComponent(selectedEmployees.join(','))}&prompt=${encodeURIComponent(prompt)}`);
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=compareAI&employees=${encodeURIComponent(selectedEmployees.join(','))}`);
     const result = await res.json();
 
     if (result.status === 'error') throw new Error(result.message);
