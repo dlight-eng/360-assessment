@@ -23,6 +23,7 @@
   .badge.manager{background:#fef3c7;color:#92400e;}
   .badge.colleague{background:#dbeafe;color:#1e40af;}
   .badge.subordinate{background:#d1fae5;color:#065f46;}
+  .badge.self{background:#f3e8ff;color:#6b21a8;}
 
   .screen{display:none;animation:fadeUp .3s ease;}
   .screen.active{display:block;}
@@ -226,7 +227,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyjDWsd6LVGgfvzqZxg3Y2n_Ixki-5Dsq51a4sRXMADOLChyewK62r1IYT_EZdySmsuPA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxBgY5-VHGlloQ77rKOejBI1GgxVyHPbco-h_uhZ8hFb5-RroKh5ibY_Oj10f7Ydcn4eA/exec';
 
 // levels[i] = масив тверджень рівня (i+1)
 const COMPETENCIES = [
@@ -333,7 +334,7 @@ window.addEventListener('DOMContentLoaded', () => {
   employeeName = p.get('employee') || '';
   role = p.get('role') || '';
   respondentName = p.get('respondent') || '';
-  if (!employeeName || !['manager','colleague','subordinate'].includes(role)) { showScreen('screenError'); return; }
+  if (!employeeName || !['manager','colleague','subordinate','self'].includes(role)) { showScreen('screenError'); return; }
   COMPETENCIES.forEach(c => { answers[c.id] = { selected: new Set(), comment: '' }; });
   document.getElementById('employeeName').textContent = employeeName;
   document.getElementById('headerMeta').textContent = `${employeeName} · ${roleLabel(role)}`;
@@ -342,7 +343,7 @@ window.addEventListener('DOMContentLoaded', () => {
   showScreen('screenIntro');
 });
 
-function roleLabel(r) { return { manager:'Керівник', colleague:'Колега', subordinate:'Підлеглий' }[r] || r; }
+function roleLabel(r) { return { manager:'Керівник', colleague:'Колега', subordinate:'Підлеглий', self:'Самооцінка' }[r] || r; }
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
