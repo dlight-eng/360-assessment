@@ -547,6 +547,7 @@
   <div style="display:flex;gap:4px;margin-bottom:24px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border);">
     <button class="tab-btn active" id="tab-links" onclick="switchTab('links')">🔗 Генератор посилань</button>
     <button class="tab-btn" id="tab-statuses" onclick="switchTab('statuses')">📋 Статуси</button>
+    <button class="tab-btn" id="tab-archive" onclick="switchTab('archive')">🗄 Архів циклів</button>
     <button class="tab-btn" id="tab-directory" onclick="switchTab('directory')">👥 Довідник</button>
   </div>
 
@@ -659,6 +660,61 @@
     </div>
   </div>
 
+  <!-- TAB: Archive -->
+  <div id="tabArchive" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+      <!-- Зберегти новий цикл -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:16px;">💾 Зберегти знімок циклу</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6;">Збережіть поточні результати як окремий цикл. Система відбере відповіді за вказаний діапазон дат.</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;">Назва циклу</label>
+            <input type="text" id="cycleName" placeholder="наприклад: I квартал 2025"
+              style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;">Дата з</label>
+              <input type="date" id="cycleFrom"
+                style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;"
+                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;">Дата по</label>
+              <input type="date" id="cycleTo"
+                style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;"
+                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+          </div>
+          <button onclick="saveCycleSnapshot()" id="btnSaveCycle"
+            style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;transition:all .17s;box-shadow:0 3px 10px rgba(37,99,235,.22);"
+            onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='var(--accent)'">
+            💾 Зберегти знімок
+          </button>
+          <div id="cycleResult" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;"></div>
+        </div>
+      </div>
+
+      <!-- Список збережених циклів -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;">📋 Збережені цикли</div>
+          <button onclick="loadCycles()" style="font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">🔄 Оновити</button>
+        </div>
+        <div id="cyclesList">
+          <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">
+            <div style="font-size:28px;margin-bottom:8px;">🗄</div>
+            Завантаження...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- TAB: Directory -->
   <div id="tabDirectory" style="display:none">
     <div style="max-width:480px">
@@ -684,7 +740,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAFcGGc-NoPHHaXWZKnFg7Gfj-z_Oe11nGfaXjd-3mMX5Dr5SVUWepD-EIxQDbd_Ap1A/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZ1vUGXBKKS03R1MINIEVYn8uE57JkDEpouuYUkVe9MB7bWx8MWUb3CbLqAWs7dEw8rQ/exec';
 
 let employeeCount = 0;
 let respondentCount = 0;
@@ -707,11 +763,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 function switchTab(tab) {
   document.getElementById('tabLinks').style.display = tab === 'links' ? 'block' : 'none';
   document.getElementById('tabStatuses').style.display = tab === 'statuses' ? 'block' : 'none';
+  document.getElementById('tabArchive').style.display = tab === 'archive' ? 'block' : 'none';
   document.getElementById('tabDirectory').style.display = tab === 'directory' ? 'block' : 'none';
   document.getElementById('tab-links').classList.toggle('active', tab === 'links');
   document.getElementById('tab-statuses').classList.toggle('active', tab === 'statuses');
+  document.getElementById('tab-archive').classList.toggle('active', tab === 'archive');
   document.getElementById('tab-directory').classList.toggle('active', tab === 'directory');
   if (tab === 'statuses') loadStatuses();
+  if (tab === 'archive') loadCycles();
 }
 
 // ============================================================
@@ -1214,6 +1273,78 @@ window.addEventListener('click', e => {
   const modal = document.getElementById('reminderModal');
   if (modal && e.target === modal) closeModal();
 });
+
+// ============================================================
+// АРХІВ ЦИКЛІВ
+// ============================================================
+async function saveCycleSnapshot() {
+  const name = document.getElementById('cycleName').value.trim();
+  const from = document.getElementById('cycleFrom').value;
+  const to = document.getElementById('cycleTo').value;
+  const resultEl = document.getElementById('cycleResult');
+  const btn = document.getElementById('btnSaveCycle');
+
+  if (!name) { showToast('⚠ Введіть назву циклу'); return; }
+  if (!from || !to) { showToast('⚠ Вкажіть діапазон дат'); return; }
+
+  btn.textContent = '⏳ Збереження...';
+  btn.disabled = true;
+  resultEl.style.display = 'none';
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveCycle', cycleName: name, dateFrom: from, dateTo: to })
+    });
+    const data = await res.json();
+
+    if (data.status === 'ok') {
+      resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;';
+      resultEl.textContent = `✓ Цикл "${name}" збережено. Записано ${data.saved} співробітників за період ${from} — ${to}.`;
+      document.getElementById('cycleName').value = '';
+      document.getElementById('cycleFrom').value = '';
+      document.getElementById('cycleTo').value = '';
+      loadCycles();
+    } else {
+      resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;';
+      resultEl.textContent = `⚠ ${data.message}`;
+    }
+  } catch(e) {
+    resultEl.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;';
+    resultEl.textContent = `⚠ Помилка: ${e.message}`;
+  }
+
+  btn.textContent = '💾 Зберегти знімок';
+  btn.disabled = false;
+}
+
+async function loadCycles() {
+  const el = document.getElementById('cyclesList');
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);">Завантаження...</div>';
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=cycles`);
+    const data = await res.json();
+    const cycles = data.cycles || [];
+
+    if (!cycles.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;"><div style="font-size:28px;margin-bottom:8px;">🗄</div>Немає збережених циклів</div>';
+      return;
+    }
+
+    el.innerHTML = cycles.map((c, i) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${i+1}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;">${c.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">збережено ${c.date}</div>
+        </div>
+        <a href="results.html#progress" style="font-size:12px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid var(--accent);border-radius:6px;transition:all .15s;" onmouseover="this.style.background='var(--accent)';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='var(--accent)'">📈 Прогрес</a>
+      </div>`).join('') + `<div style="margin-top:12px;font-size:12px;color:var(--text3);text-align:center;">Всього циклів: ${cycles.length}</div>`;
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);font-size:13px;">Помилка завантаження</div>';
+  }
+}
 
 let toastTimer;
 function showToast(msg) {
