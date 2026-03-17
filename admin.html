@@ -1172,11 +1172,14 @@ function openReminder(s) {
     text: `Привіт, ${name}!\n\nДякуємо, що пройшов(ла) оцінку 360° для ${employee}!\n\nТвої відповіді були збережені та будуть враховані при формуванні зворотного зв'язку.\n\nЦінуємо твій час та участь!`
   });
 
-  document.getElementById('reminderTemplates').innerHTML = templates.map(t => `
+  // Зберігаємо тексти глобально для копіювання по індексу
+  window._reminderTexts = templates.map(t => t.text);
+
+  document.getElementById('reminderTemplates').innerHTML = templates.map((t, idx) => `
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div style="font-size:13px;font-weight:600;color:var(--text);">${t.label}</div>
-        <button onclick="copyReminder(this, ${JSON.stringify(t.text).replace(/'/g,"\\'")})"
+        <button onclick="copyReminderIdx(this, ${idx})"
           style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap;">
           📋 Копіювати
         </button>
@@ -1190,6 +1193,11 @@ function openReminder(s) {
 
 function closeModal() {
   document.getElementById('reminderModal').style.display = 'none';
+}
+
+function copyReminderIdx(btn, idx) {
+  const text = window._reminderTexts?.[idx] || '';
+  copyReminder(btn, text);
 }
 
 function copyReminder(btn, text) {
@@ -1206,6 +1214,9 @@ window.addEventListener('click', e => {
   const modal = document.getElementById('reminderModal');
   if (modal && e.target === modal) closeModal();
 });
+
+let toastTimer;
+function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
