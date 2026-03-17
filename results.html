@@ -258,6 +258,14 @@
     </div>
   </header>
 
+  <!-- Tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:24px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border);">
+    <button class="nav-link active" id="tab-results" onclick="switchResultsTab('results')" style="flex:1;text-align:center;border-radius:7px;cursor:pointer;">📊 Результати</button>
+    <button class="nav-link" id="tab-progress" onclick="switchResultsTab('progress')" style="flex:1;text-align:center;border-radius:7px;cursor:pointer;">📈 Прогрес</button>
+  </div>
+
+  <!-- TAB: Results -->
+  <div id="tabResults">
   <!-- Selector -->
   <div class="selector-wrap">
     <h2>Звіт по співробітнику</h2>
@@ -350,10 +358,93 @@
     </div>
 
   </div>
+  </div><!-- /tabResults -->
+
+  <!-- TAB: Progress -->
+  <div id="tabProgress" style="display:none">
+
+    <!-- Selector -->
+    <div class="selector-wrap">
+      <h2>Прогрес між циклами</h2>
+      <p>Оберіть співробітника та цикли для порівняння</p>
+      <div class="selector-row" style="flex-wrap:wrap;gap:10px;">
+        <div class="sel-field">
+          <label>Співробітник</label>
+          <select id="progressEmpSelect" onchange="loadProgressData()">
+            <option value="">— Оберіть —</option>
+          </select>
+        </div>
+        <button class="btn-load" onclick="loadProgressData()" style="white-space:nowrap">Показати прогрес →</button>
+      </div>
+    </div>
+
+    <!-- Progress loading -->
+    <div id="progressLoading" style="display:none">
+      <div class="loading"><div class="spinner"></div>Завантаження циклів...</div>
+    </div>
+
+    <!-- Progress empty -->
+    <div id="progressEmpty">
+      <div class="empty">
+        <div class="empty-icon">📈</div>
+        <h3>Оберіть співробітника</h3>
+        <p>Після вибору відобразяться доступні цикли для порівняння</p>
+      </div>
+    </div>
+
+    <!-- Progress results -->
+    <div id="progressResults" style="display:none">
+
+      <!-- Cycle selector checkboxes -->
+      <div class="panel" style="margin-bottom:20px;">
+        <div class="panel-title">Оберіть цикли для порівняння</div>
+        <div id="cycleCheckboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+        <button onclick="renderProgress()" class="btn-load" style="padding:9px 20px;font-size:13px;">🔄 Оновити графік</button>
+      </div>
+
+      <!-- Chart + overall -->
+      <div class="grid2" style="margin-bottom:20px;">
+        <div class="panel">
+          <div class="panel-title">Динаміка загальної оцінки</div>
+          <div style="position:relative;height:250px;">
+            <canvas id="progressLineChart"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Зміна по циклах</div>
+          <div id="progressOverallBars"></div>
+        </div>
+      </div>
+
+      <!-- Competency dynamics table -->
+      <div class="panel" style="margin-bottom:20px;overflow-x:auto;">
+        <div class="panel-title">Динаміка по компетенціях</div>
+        <table class="comp-table" id="progressTable"></table>
+      </div>
+
+      <!-- AI Progress Analysis -->
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div class="panel-title" style="margin-bottom:4px">AI-аналіз прогресу</div>
+            <div style="font-size:13px;color:var(--text2);">Динаміка розвитку та рекомендації на наступний цикл</div>
+          </div>
+          <button class="btn-ai" id="btnProgressAI" onclick="generateProgressAI()">✨ Згенерувати аналіз</button>
+        </div>
+        <div id="progressAIContent">
+          <div style="text-align:center;padding:32px;color:var(--text3);font-size:14px;">
+            Оберіть цикли і натисніть «Згенерувати аналіз»
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tabProgress -->
+
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAFcGGc-NoPHHaXWZKnFg7Gfj-z_Oe11nGfaXjd-3mMX5Dr5SVUWepD-EIxQDbd_Ap1A/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZ1vUGXBKKS03R1MINIEVYn8uE57JkDEpouuYUkVe9MB7bWx8MWUb3CbLqAWs7dEw8rQ/exec';
 
 const COMP_ORDER = ['risk','time','digital','strategic','delegation','resilience',
                     'responsibility','engagement','initiative','development'];
@@ -805,6 +896,229 @@ function renderInline(text) {
     .replace(/✅/g, '<span style="color:#059669">✓</span>')
     .replace(/❌/g, '<span style="color:#dc2626">✗</span>');
 }
+
+// ============================================================
+// TABS
+// ============================================================
+function switchResultsTab(tab) {
+  document.getElementById('tabResults').style.display = tab === 'results' ? 'block' : 'none';
+  document.getElementById('tabProgress').style.display = tab === 'progress' ? 'block' : 'none';
+  document.getElementById('tab-results').classList.toggle('active', tab === 'results');
+  document.getElementById('tab-progress').classList.toggle('active', tab === 'progress');
+  if (tab === 'progress') initProgressTab();
+}
+
+// ============================================================
+// PROGRESS TAB
+// ============================================================
+let progressData = null;
+let progressLineInstance = null;
+
+async function initProgressTab() {
+  // Підтягуємо список співробітників якщо ще не завантажений
+  const sel = document.getElementById('progressEmpSelect');
+  if (sel.options.length <= 1) {
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=employees`);
+      const data = await res.json();
+      (data.employees || []).forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.name; opt.textContent = e.name;
+        sel.appendChild(opt);
+      });
+    } catch(err) {}
+  }
+}
+
+async function loadProgressData() {
+  const emp = document.getElementById('progressEmpSelect').value;
+  if (!emp) return;
+
+  document.getElementById('progressEmpty').style.display = 'none';
+  document.getElementById('progressResults').style.display = 'none';
+  document.getElementById('progressLoading').style.display = 'block';
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=progress&employee=${encodeURIComponent(emp)}`);
+    const data = await res.json();
+    document.getElementById('progressLoading').style.display = 'none';
+
+    if (!data.progress || data.progress.length < 1) {
+      document.getElementById('progressEmpty').style.display = 'block';
+      document.getElementById('progressEmpty').innerHTML = `<div class="empty"><div class="empty-icon">📭</div><h3>Немає збережених циклів</h3><p>Для ${emp} ще не створено жодного знімку циклу.<br>Перейди в Адмін → Архів циклів.</p></div>`;
+      return;
+    }
+
+    progressData = data;
+    renderCycleCheckboxes();
+    renderProgress();
+    document.getElementById('progressResults').style.display = 'block';
+  } catch(err) {
+    document.getElementById('progressLoading').style.display = 'none';
+    document.getElementById('progressEmpty').style.display = 'block';
+  }
+}
+
+function renderCycleCheckboxes() {
+  const el = document.getElementById('cycleCheckboxes');
+  const colors = ['#2563eb','#059669','#dc2626','#7c3aed','#d97706'];
+  el.innerHTML = progressData.progress.map((p, i) => {
+    const c = colors[i % colors.length];
+    return `<label style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:100px;border:2px solid ${c};cursor:pointer;font-size:13px;font-weight:500;color:${c};background:rgba(0,0,0,.02);user-select:none;">
+      <input type="checkbox" checked data-cycle="${p.cycle}" style="accent-color:${c}">
+      ${p.cycle}
+      <span style="font-size:11px;opacity:.7">${p.date}</span>
+    </label>`;
+  }).join('');
+}
+
+function getSelectedCycles() {
+  return [...document.querySelectorAll('#cycleCheckboxes input:checked')].map(el => el.dataset.cycle);
+}
+
+function renderProgress() {
+  const selected = getSelectedCycles();
+  if (!progressData || !selected.length) return;
+
+  const cycles = progressData.progress.filter(p => selected.includes(p.cycle));
+  const colors = ['#2563eb','#059669','#dc2626','#7c3aed','#d97706'];
+
+  // Line chart — загальна оцінка
+  if (progressLineInstance) { progressLineInstance.destroy(); progressLineInstance = null; }
+
+  const ctx = document.getElementById('progressLineChart').getContext('2d');
+  progressLineInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: cycles.map(c => c.cycle),
+      datasets: [{
+        label: 'Загальна оцінка',
+        data: cycles.map(c => c.overall),
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37,99,235,.1)',
+        borderWidth: 3,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { min: 0, max: 5, ticks: { stepSize: 1 }, grid: { color: '#dde3f0' } },
+        x: { grid: { display: false } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.parsed.y}/5` }
+        }
+      }
+    }
+  });
+
+  // Overall bars with delta
+  const barsEl = document.getElementById('progressOverallBars');
+  barsEl.innerHTML = cycles.map((c, i) => {
+    const prev = i > 0 ? cycles[i-1].overall : null;
+    const delta = prev !== null && c.overall !== null ? Math.round((c.overall - prev)*10)/10 : null;
+    const deltaHtml = delta !== null
+      ? `<span style="font-size:12px;font-weight:600;color:${delta>=0?'var(--success)':'var(--danger)'};">${delta>=0?'+':''}${delta}</span>`
+      : '';
+    const pct = c.overall ? c.overall/5*100 : 0;
+    const col = colors[i % colors.length];
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--text2);width:130px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.cycle}</div>
+      <div style="flex:1;height:8px;background:var(--surface2);border-radius:100px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${col};border-radius:100px;transition:width .6s;"></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:${col};width:28px;">${c.overall??'—'}</div>
+      ${deltaHtml}
+    </div>`;
+  }).join('');
+
+  // Competency table
+  renderProgressTable(cycles, colors);
+
+  // Reset AI
+  document.getElementById('progressAIContent').innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px;">Оберіть цикли і натисніть «Згенерувати аналіз»</div>';
+  document.getElementById('btnProgressAI').textContent = '✨ Згенерувати аналіз';
+  document.getElementById('btnProgressAI').disabled = false;
+}
+
+function renderProgressTable(cycles, colors) {
+  const table = document.getElementById('progressTable');
+
+  const thCols = cycles.map((c, i) =>
+    `<th style="color:${colors[i%colors.length]};text-align:center">${c.cycle}</th>`
+  ).join('') + '<th style="text-align:center">Δ</th>';
+
+  let html = `<thead><tr><th>Компетенція</th>${thCols}</tr></thead><tbody>`;
+
+  COMP_ORDER.forEach(id => {
+    const vals = cycles.map(c => c.scores[id]);
+    const first = vals.find(v => v !== null);
+    const last = [...vals].reverse().find(v => v !== null);
+    const delta = first !== null && last !== null && first !== last
+      ? Math.round((last - first)*10)/10 : null;
+
+    const cells = vals.map((v, i) => {
+      if (v === null) return `<td style="text-align:center;color:var(--text3)">—</td>`;
+      const cls = v >= 4 ? 'score-high' : v >= 3 ? 'score-ok' : v >= 2 ? 'score-mid' : 'score-low';
+      return `<td class="td-score ${cls}" style="text-align:center">${v}</td>`;
+    }).join('');
+
+    const deltaCell = delta !== null
+      ? `<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${delta>0?'var(--success)':delta<0?'var(--danger)':'var(--text3)'};">${delta>0?'+':''}${delta}</td>`
+      : '<td style="text-align:center;color:var(--text3)">—</td>';
+
+    html += `<tr><td class="td-comp">${COMP_NAMES[id]}</td>${cells}${deltaCell}</tr>`;
+  });
+
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+async function generateProgressAI() {
+  const emp = document.getElementById('progressEmpSelect').value;
+  const selected = getSelectedCycles();
+  const btn = document.getElementById('btnProgressAI');
+  const content = document.getElementById('progressAIContent');
+
+  if (!emp || selected.length < 2) {
+    content.innerHTML = '<div class="ai-error">Оберіть мінімум 2 цикли для аналізу</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Генерується...';
+  content.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div>Аналізую динаміку розвитку...</div>';
+
+  try {
+    const params = `action=progressAI&employee=${encodeURIComponent(emp)}&cycles=${encodeURIComponent(selected.join(','))}`;
+    const res = await fetch(`${APPS_SCRIPT_URL}?${params}`);
+    const result = await res.json();
+
+    if (result.status === 'error') throw new Error(result.message);
+
+    content.innerHTML = `<div class="ai-result">${formatAIText(result.summary)}</div>`;
+    btn.textContent = '🔄 Оновити аналіз';
+    btn.disabled = false;
+  } catch(err) {
+    content.innerHTML = `<div class="ai-error">Помилка: ${err.message}</div>`;
+    btn.textContent = '✨ Спробувати знову';
+    btn.disabled = false;
+  }
+}
+
+// formatAIText для progress tab (той самий)
+const PROGRESS_SECTION_DEFS = [
+  { re:/## 📈/, cls:'overall', icon:'📈' },
+  { re:/## 💪/, cls:'strengths', icon:'💪' },
+  { re:/## ⚠/, cls:'growth', icon:'⚠' },
+  { re:/## 🎯/, cls:'recs', icon:'🎯' },
+];
 </script>
 </body>
 </html>
