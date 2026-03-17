@@ -633,13 +633,29 @@
             <th style="padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Роль</th>
             <th style="padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Статус</th>
             <th style="padding:11px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Час</th>
+            <th style="padding:11px 16px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Нагадування</th>
             <th style="padding:11px 16px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);">Дії</th>
           </tr>
         </thead>
         <tbody id="statusTbody">
-          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3);">Завантаження...</td></tr>
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3);">Завантаження...</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Reminder Modal -->
+  <div id="reminderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;max-width:560px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;" id="modalTitle">Нагадування</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px;" id="modalSubtitle"></div>
+        </div>
+        <button onclick="closeModal()" style="width:32px;height:32px;border:none;background:var(--surface2);border-radius:8px;cursor:pointer;font-size:18px;color:var(--text2);">×</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;" id="reminderTemplates"></div>
     </div>
   </div>
 
@@ -793,6 +809,9 @@ function renderStatuses() {
       <td style="padding:12px 16px;">${statusBadge(s.status)}</td>
       <td style="padding:12px 16px;font-size:12px;color:var(--text3);">
         ${s.finishedAt ? '✓ ' + formatTime(s.finishedAt) : s.startedAt ? '→ ' + formatTime(s.startedAt) : '—'}
+      </td>
+      <td style="padding:12px 16px;text-align:center;">
+        ${s.status !== 'Завершив' ? `<button onclick="openReminder(${JSON.stringify(s).replace(/"/g,'&quot;')})" style="padding:5px 12px;background:transparent;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);cursor:pointer;font-family:'Geologica',sans-serif;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">💬 Нагадати</button>` : '<span style="font-size:12px;color:var(--success)">✓ готово</span>'}
       </td>
       <td style="padding:12px 16px;text-align:center;">
         <button onclick="deleteLinkEntry('${s.linkId}', this)" style="padding:5px 12px;background:transparent;border:1px solid #fecaca;border-radius:6px;font-size:12px;color:var(--danger);cursor:pointer;font-family:'Geologica',sans-serif;transition:all .15s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">Видалити</button>
@@ -1090,8 +1109,94 @@ function copyAll() {
   navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('✓ Всі посилання скопійовано'));
 }
 
-let toastTimer;
-function showToast(msg) {
+// ============================================================
+// НАГАДУВАННЯ
+// ============================================================
+const BASE_URL = 'https://dlight-eng.github.io/360-assessment';
+
+function getLinkUrl(s) {
+  const emp = encodeURIComponent(s.employee);
+  const resp = encodeURIComponent(s.respondent || '');
+  const roleMap = { 'Керівник':'manager', 'Колега':'colleague', 'Підлеглий':'subordinate', 'Самооцінка':'self' };
+  const role = roleMap[s.role] || s.role;
+  return `${BASE_URL}/?employee=${emp}&role=${role}${resp ? `&respondent=${resp}` : ''}`;
+}
+
+function openReminder(s) {
+  const url = getLinkUrl(s);
+  const name = s.respondent || 'Колего';
+  const employee = s.employee;
+  const isNotStarted = !s.status || s.status === 'Не почав';
+  const isStarted = s.status === 'Розпочав';
+
+  document.getElementById('modalTitle').textContent = `Нагадування для ${name}`;
+  document.getElementById('modalSubtitle').textContent = `Оцінка ${employee} · ${s.role}`;
+
+  const templates = [];
+
+  if (isNotStarted) {
+    templates.push({
+      label: '📨 Перше запрошення',
+      icon: '📨',
+      text: `Привіт, ${name}!\n\nЗапрошуємо тебе взяти участь в оцінці 360° для ${employee}.\n\nЦе займе близько 10–15 хвилин. Твої відповіді анонімні.\n\n🔗 Посилання: ${url}\n\nДякуємо за участь!`
+    });
+  }
+
+  if (isStarted) {
+    templates.push({
+      label: '🔔 Нагадування (не завершив)',
+      icon: '🔔',
+      text: `Привіт, ${name}!\n\nТи розпочав(ла) оцінку 360° для ${employee}, але ще не завершив(ла).\n\nТвої відповіді важливі! Повернись і завершіть — це займе ще кілька хвилин.\n\n🔗 Посилання: ${url}\n\nДякуємо!`
+    });
+  }
+
+  if (isNotStarted) {
+    templates.push({
+      label: '⏰ Нагадування (не почав)',
+      icon: '⏰',
+      text: `Привіт, ${name}!\n\nНагадуємо про оцінку 360° для ${employee}. Опитування ще відкрите!\n\nПройди будь ласка — це займе 10–15 хвилин і допоможе ${employee} отримати об'єктивний зворотний зв'язок.\n\n🔗 Посилання: ${url}\n\nДякуємо за участь!`
+    });
+  }
+
+  templates.push({
+    label: '✅ Подяка за завершення',
+    icon: '✅',
+    text: `Привіт, ${name}!\n\nДякуємо, що пройшов(ла) оцінку 360° для ${employee}!\n\nТвої відповіді були збережені та будуть враховані при формуванні зворотного зв'язку.\n\nЦінуємо твій час та участь!`
+  });
+
+  document.getElementById('reminderTemplates').innerHTML = templates.map(t => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);">${t.label}</div>
+        <button onclick="copyReminder(this, ${JSON.stringify(t.text).replace(/'/g,"\\'")})"
+          style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap;">
+          📋 Копіювати
+        </button>
+      </div>
+      <pre style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;font-family:'Geologica',sans-serif;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:12px;">${t.text}</pre>
+    </div>
+  `).join('');
+
+  document.getElementById('reminderModal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('reminderModal').style.display = 'none';
+}
+
+function copyReminder(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Скопійовано';
+    btn.style.background = 'var(--success)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = 'var(--accent)'; }, 2000);
+  });
+}
+
+// Закрити модал по кліку поза ним
+document.getElementById('reminderModal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('reminderModal')) closeModal();
+});
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
