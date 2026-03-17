@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Порівняння 360° | Звіт</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#f2f5fb; --surface:#fff; --surface2:#eef1f8; --border:#dde3f0;
+    --accent:#2563eb; --accent2:#7c3aed; --text:#111827; --text2:#4b5563;
+    --text3:#9ca3af; --success:#059669; --danger:#dc2626; --r:12px; --rl:20px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Geologica',sans-serif;min-height:100vh;}
+  .app{max-width:1100px;margin:0 auto;padding:24px 20px 80px;}
+
+  .header{display:flex;align-items:center;gap:14px;padding:22px 0 26px;border-bottom:1px solid var(--border);margin-bottom:28px;}
+  .logo{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;flex-shrink:0;}
+  .header-info h1{font-size:16px;font-weight:600;}
+  .header-info p{font-size:12px;color:var(--text2);margin-top:2px;}
+  .nav-links{margin-left:auto;display:flex;gap:8px;}
+  .nav-link{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:var(--surface);transition:all .15s;}
+  .nav-link:hover{border-color:var(--accent);color:var(--accent);}
+  .nav-link.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:24px 28px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .panel-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
+
+  /* Selector */
+  .selector-panel h2{font-size:18px;font-weight:700;margin-bottom:6px;}
+  .selector-panel p{font-size:14px;color:var(--text2);margin-bottom:20px;}
+
+  .emp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;min-height:40px;align-items:center;}
+  .emp-chip-sel{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 12px;border-radius:100px;font-size:13px;font-weight:500;
+    border:2px solid; cursor:default;
+  }
+  .emp-chip-sel button{
+    background:none;border:none;cursor:pointer;font-size:14px;
+    line-height:1;padding:0 2px;opacity:.7;transition:opacity .15s;
+  }
+  .emp-chip-sel button:hover{opacity:1;}
+
+  .add-row{display:flex;gap:10px;align-items:center;}
+  .add-row select{flex:1;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;}
+  .add-row select:focus{border-color:var(--accent);}
+
+  .btn{padding:10px 22px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:'Geologica',sans-serif;transition:all .17s;}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(37,99,235,.22);}
+  .btn-primary:hover{background:#1d4ed8;transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .btn-ai{padding:9px 20px;background:linear-gradient(135deg,var(--accent2),#4f46e5);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(124,58,237,.25);transition:all .17s;}
+  .btn-ai:hover{transform:translateY(-1px);}
+  .btn-ai:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .btn-pdf{display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--success);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(5,150,105,.22);transition:all .17s;}
+  .btn-pdf:hover{background:#047857;transform:translateY(-1px);}
+
+  /* Charts grid */
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+
+  .radar-wrap{position:relative;height:360px;display:flex;align-items:center;justify-content:center;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+  /* Comparison table */
+  .comp-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .comp-table th{padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;border-bottom:2px solid var(--border);white-space:nowrap;}
+  .comp-table td{padding:11px 14px;border-bottom:1px solid var(--border);}
+  .comp-table tr:last-child td{border-bottom:none;}
+  .comp-table tr:hover td{background:var(--surface2);}
+  .td-comp{font-size:13px;color:var(--text2);font-weight:500;}
+  .td-score{text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;}
+  .score-high{color:var(--success);}
+  .score-ok{color:var(--accent);}
+  .score-mid{color:#d97706;}
+  .score-low{color:var(--danger);}
+  .best-cell{background:rgba(5,150,105,.06);}
+  .worst-cell{background:rgba(220,38,38,.04);}
+
+  /* Bar sparkline */
+  .spark{display:inline-block;height:6px;border-radius:100px;vertical-align:middle;margin-right:6px;}
+
+  /* AI */
+  .ai-loading{display:flex;align-items:center;gap:12px;padding:24px;color:var(--text2);font-size:14px;}
+  .ai-spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .ai-result{animation:fadeUp .4s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .ai-section{margin-bottom:20px;}
+  .ai-section:last-child{margin-bottom:0;}
+  .ai-section-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .ai-section-title .icon{font-size:16px;}
+  .ai-section-title.overall{color:var(--text);}
+  .ai-section-title.leaders{color:var(--success);}
+  .ai-section-title.gaps{color:#d97706;}
+  .ai-section-title.recs{color:var(--accent);}
+
+  .ai-text{font-size:14px;color:var(--text2);line-height:1.75;}
+  .ai-text p{margin-bottom:10px;}
+  .ai-text p:last-child{margin-bottom:0;}
+  .ai-text ul{padding-left:18px;margin-bottom:10px;}
+  .ai-text ul li{margin-bottom:5px;}
+  .ai-text strong{color:var(--text);font-weight:600;}
+  .ai-error{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px 16px;font-size:13px;color:var(--danger);}
+
+  /* Empty */
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
+  .empty-state .icon{font-size:40px;margin-bottom:16px;}
+  .empty-state h3{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px;}
+  .empty-state p{font-size:14px;}
+
+  /* Loading */
+  .loading{text-align:center;padding:40px;color:var(--text3);}
+  .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+
+  @media(max-width:700px){
+    .charts-grid{grid-template-columns:1fr;}
+  }
+
+  /* Print */
+  @media print {
+    @page{margin:15mm 12mm;size:A4;}
+    body{background:#fff;}
+    .app{padding:0;max-width:100%;}
+    .header,.nav-links,.selector-panel,.pdf-hide{display:none!important;}
+    .panel{box-shadow:none!important;break-inside:avoid;}
+    .charts-grid{grid-template-columns:1fr 1fr;}
+    .radar-wrap{height:280px!important;}
+    #radarChart{display:none!important;}
+    #radarPrintImg{display:block!important;width:100%;height:100%;object-fit:contain;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="logo">⚖</div>
+    <div class="header-info">
+      <h1>Порівняння співробітників</h1>
+      <p>Оцінка 360° · BPI Group</p>
+    </div>
+    <div class="nav-links">
+      <a href="admin.html" class="nav-link">⚙ Адмін</a>
+      <a href="results.html" class="nav-link">📊 Результати</a>
+      <a href="compare.html" class="nav-link active">⚖ Порівняння</a>
+    </div>
+  </header>
+
+  <!-- Selector -->
+  <div class="panel selector-panel">
+    <h2>Порівняння компетенцій</h2>
+    <p>Оберіть від 2 до 5 співробітників для порівняння на одній діаграмі</p>
+
+    <div class="emp-chips" id="selectedChips">
+      <span style="font-size:13px;color:var(--text3);">Додайте співробітників нижче</span>
+    </div>
+
+    <div class="add-row">
+      <select id="empSelect">
+        <option value="">— Завантаження... —</option>
+      </select>
+      <button class="btn btn-primary" onclick="addEmployee()">+ Додати</button>
+      <button class="btn btn-primary" id="btnCompare" onclick="loadComparison()" disabled
+        style="background:linear-gradient(135deg,var(--accent),var(--accent2));white-space:nowrap;">
+        ⚖ Порівняти
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loadingState" style="display:none">
+    <div class="loading"><div class="spinner"></div>Завантаження даних...</div>
+  </div>
+
+  <!-- Empty -->
+  <div id="emptyState">
+    <div class="empty-state">
+      <div class="icon">⚖</div>
+      <h3>Оберіть співробітників</h3>
+      <p>Додайте від 2 до 5 співробітників і натисніть «Порівняти»</p>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="compareResults" style="display:none">
+
+    <!-- PDF header -->
+    <div id="pdfHeader" style="display:none;padding-bottom:12px;border-bottom:2px solid var(--accent);margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:18px;font-weight:700;" id="pdfTitle">Порівняння 360°</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px;" id="pdfSubtitle"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);text-align:right;">
+          BPI Group<br><span id="pdfDate"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="panel">
+        <div class="panel-title">Радарна діаграма</div>
+        <div class="radar-wrap">
+          <canvas id="radarChart"></canvas>
+          <img id="radarPrintImg" style="display:none;width:100%;height:100%;object-fit:contain;">
+        </div>
+        <div class="legend" id="radarLegend"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Загальна середня по співробітниках</div>
+        <div id="avgBars"></div>
+      </div>
+    </div>
+
+    <!-- Comparison table -->
+    <div class="panel" style="overflow-x:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div class="panel-title" style="margin-bottom:0">Детальне порівняння по компетенціях</div>
+        <div style="font-size:12px;color:var(--text3);">
+          <span style="background:rgba(5,150,105,.08);padding:2px 8px;border-radius:4px;color:var(--success)">■ найвищий</span>
+          <span style="background:rgba(220,38,38,.06);padding:2px 8px;border-radius:4px;color:var(--danger);margin-left:6px">■ найнижчий</span>
+        </div>
+      </div>
+      <table class="comp-table" id="compTable"></table>
+    </div>
+
+    <!-- AI Analysis -->
+    <div class="panel" id="aiPanel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="panel-title" style="margin-bottom:4px">AI-порівняльний аналіз</div>
+          <div style="font-size:13px;color:var(--text2);">Автоматичне порівняння компетенцій та рекомендації</div>
+        </div>
+        <div style="display:flex;gap:8px;" class="pdf-hide">
+          <button class="btn-ai" id="btnAI" onclick="generateAI()">✨ Згенерувати аналіз</button>
+          <button class="btn-pdf" id="btnPDF" onclick="exportPDF()" style="display:none">📄 PDF</button>
+        </div>
+      </div>
+      <div id="aiContent">
+        <div style="text-align:center;padding:32px;color:var(--text3);font-size:14px;">
+          Натисніть «Згенерувати аналіз» для AI-порівняння
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-UkKj9_ZS_rxXFIIxT-vF1kQrlnyCdrG2JQ1yqGvRpVszVs2yngZmGTpI2Mw_ImZ0jg/exec';
+
+const COMP_ORDER = ['risk','time','digital','strategic','delegation','resilience',
+                    'responsibility','engagement','initiative','development'];
+const COMP_NAMES = {
+  risk:'Управління ризиками', time:'Управління часом', digital:'Цифрова компетентність',
+  strategic:'Стратегічне мислення', delegation:'Делегування', resilience:'Особиста стійкість',
+  responsibility:'Відповідальність', engagement:'Залученість',
+  initiative:'Ініціативність', development:'Розвиток'
+};
+
+// Кольори для кожного співробітника
+const EMP_COLORS = [
+  { border:'rgba(37,99,235,.85)',  bg:'rgba(37,99,235,.12)',  hex:'#2563eb' },
+  { border:'rgba(5,150,105,.85)',  bg:'rgba(5,150,105,.12)',  hex:'#059669' },
+  { border:'rgba(220,38,38,.85)',  bg:'rgba(220,38,38,.12)',  hex:'#dc2626' },
+  { border:'rgba(124,58,237,.85)', bg:'rgba(124,58,237,.12)', hex:'#7c3aed' },
+  { border:'rgba(217,119,6,.85)',  bg:'rgba(217,119,6,.12)',  hex:'#d97706' },
+];
+
+let selectedEmployees = [];
+let allEmployees = [];
+let comparisonData = {};
+let radarInstance = null;
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=employees`);
+    const data = await res.json();
+    allEmployees = (data.employees || []).map(e => e.name);
+    updateSelect();
+  } catch(e) {
+    document.getElementById('empSelect').innerHTML = '<option value="">Помилка завантаження</option>';
+  }
+});
+
+function updateSelect() {
+  const sel = document.getElementById('empSelect');
+  const available = allEmployees.filter(e => !selectedEmployees.includes(e));
+  sel.innerHTML = available.length
+    ? '<option value="">— Оберіть співробітника —</option>' + available.map(n=>`<option value="${n}">${n}</option>`).join('')
+    : '<option value="">Всіх додано</option>';
+}
+
+function addEmployee() {
+  const sel = document.getElementById('empSelect');
+  const name = sel.value;
+  if (!name) return;
+  if (selectedEmployees.length >= 5) { alert('Максимум 5 співробітників'); return; }
+  if (selectedEmployees.includes(name)) return;
+  selectedEmployees.push(name);
+  renderChips();
+  updateSelect();
+  updateCompareBtn();
+}
+
+function removeEmployee(name) {
+  selectedEmployees = selectedEmployees.filter(e => e !== name);
+  renderChips();
+  updateSelect();
+  updateCompareBtn();
+  if (selectedEmployees.length < 2) {
+    document.getElementById('compareResults').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+  }
+}
+
+function renderChips() {
+  const el = document.getElementById('selectedChips');
+  if (!selectedEmployees.length) {
+    el.innerHTML = '<span style="font-size:13px;color:var(--text3);">Додайте співробітників нижче</span>';
+    return;
+  }
+  el.innerHTML = selectedEmployees.map((name, i) => {
+    const c = EMP_COLORS[i % EMP_COLORS.length];
+    return `<div class="emp-chip-sel" style="background:rgba(0,0,0,.04);border-color:${c.hex};color:${c.hex};">
+      <div style="width:8px;height:8px;border-radius:50%;background:${c.hex};flex-shrink:0;"></div>
+      ${name}
+      <button onclick="removeEmployee('${name}')" title="Видалити">×</button>
+    </div>`;
+  }).join('');
+}
+
+function updateCompareBtn() {
+  document.getElementById('btnCompare').disabled = selectedEmployees.length < 2;
+}
+
+// ============================================================
+// LOAD & RENDER
+// ============================================================
+async function loadComparison() {
+  if (selectedEmployees.length < 2) return;
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('compareResults').style.display = 'none';
+  document.getElementById('loadingState').style.display = 'block';
+
+  try {
+    const params = encodeURIComponent(selectedEmployees.join(','));
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=comparison&employees=${params}`);
+    const data = await res.json();
+    comparisonData = data.comparison || {};
+    document.getElementById('loadingState').style.display = 'none';
+    renderComparison();
+  } catch(e) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('emptyState').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Помилка завантаження</h3><p>' + e.message + '</p></div>';
+  }
+}
+
+function renderComparison() {
+  // PDF header
+  document.getElementById('pdfTitle').textContent = `Порівняння 360° — ${selectedEmployees.join(', ')}`;
+  document.getElementById('pdfSubtitle').textContent = `${selectedEmployees.length} співробітників · ${COMP_ORDER.length} компетенцій`;
+  document.getElementById('pdfDate').textContent = new Date().toLocaleDateString('uk-UA', {day:'2-digit',month:'long',year:'numeric'});
+
+  // Reset AI
+  document.getElementById('aiContent').innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px;">Натисніть «Згенерувати аналіз» для AI-порівняння</div>';
+  document.getElementById('btnAI').disabled = false;
+  document.getElementById('btnAI').textContent = '✨ Згенерувати аналіз';
+  document.getElementById('btnPDF').style.display = 'none';
+
+  renderRadar();
+  renderAvgBars();
+  renderTable();
+
+  document.getElementById('compareResults').style.display = 'block';
+  window.scrollTo({top: document.getElementById('compareResults').offsetTop - 20, behavior:'smooth'});
+}
+
+// ---- Radar ----
+function renderRadar() {
+  if (radarInstance) { radarInstance.destroy(); radarInstance = null; }
+
+  const labels = COMP_ORDER.map(id => {
+    const n = COMP_NAMES[id];
+    return n.length > 14 ? n.slice(0,12)+'…' : n;
+  });
+
+  const datasets = selectedEmployees.map((emp, i) => {
+    const c = EMP_COLORS[i % EMP_COLORS.length];
+    const data = comparisonData[emp];
+    return {
+      label: emp,
+      data: COMP_ORDER.map(id => data?.competencies?.[id]?.overall ?? 0),
+      backgroundColor: c.bg,
+      borderColor: c.border,
+      borderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+    };
+  });
+
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  radarInstance = new Chart(ctx, {
+    type: 'radar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        r: {
+          min: 0, max: 5,
+          ticks: { stepSize: 1, font:{size:10}, color:'#9ca3af', backdropColor:'transparent' },
+          grid: { color:'#dde3f0' },
+          angleLines: { color:'#dde3f0' },
+          pointLabels: { font:{size:10,family:'Geologica'}, color:'#4b5563' }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Legend
+  document.getElementById('radarLegend').innerHTML = selectedEmployees.map((emp, i) => {
+    const c = EMP_COLORS[i % EMP_COLORS.length];
+    return `<div class="legend-item">
+      <div class="legend-dot" style="background:${c.hex}"></div>
+      ${emp}
+    </div>`;
+  }).join('');
+}
+
+// ---- Avg bars ----
+function renderAvgBars() {
+  const el = document.getElementById('avgBars');
+
+  const avgs = selectedEmployees.map((emp, i) => {
+    const data = comparisonData[emp];
+    const scores = COMP_ORDER.map(id => data?.competencies?.[id]?.overall).filter(s => s);
+    const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10 : null;
+    return { emp, avg, color: EMP_COLORS[i % EMP_COLORS.length] };
+  }).sort((a,b) => (b.avg||0) - (a.avg||0));
+
+  el.innerHTML = avgs.map(({emp, avg, color}) => {
+    const pct = avg ? avg/5*100 : 0;
+    const cls = avg >= 4 ? 'score-high' : avg >= 3 ? 'score-ok' : avg >= 2 ? 'score-mid' : 'score-low';
+    return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="font-size:13px;color:var(--text2);width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${emp}</div>
+      <div style="flex:1;height:8px;background:var(--surface2);border-radius:100px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color.hex};border-radius:100px;"></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;width:32px;text-align:right;" class="${cls}">${avg??'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ---- Table ----
+function renderTable() {
+  const table = document.getElementById('compTable');
+
+  const thCols = selectedEmployees.map((emp, i) => {
+    const c = EMP_COLORS[i % EMP_COLORS.length];
+    return `<th style="color:${c.hex}">${emp}</th>`;
+  }).join('');
+
+  let html = `<thead><tr><th>Компетенція</th>${thCols}<th>Різниця</th></tr></thead><tbody>`;
+
+  COMP_ORDER.forEach(id => {
+    const scores = selectedEmployees.map(emp => comparisonData[emp]?.competencies?.[id]?.overall ?? null);
+    const validScores = scores.filter(s => s !== null);
+    const maxScore = validScores.length ? Math.max(...validScores) : null;
+    const minScore = validScores.length ? Math.min(...validScores) : null;
+    const diff = (maxScore !== null && minScore !== null) ? Math.round((maxScore - minScore)*10)/10 : null;
+
+    const cells = scores.map((score, i) => {
+      if (score === null) return '<td class="td-score" style="color:var(--text3)">—</td>';
+      const cls = score >= 4 ? 'score-high' : score >= 3 ? 'score-ok' : score >= 2 ? 'score-mid' : 'score-low';
+      const isBest = score === maxScore && maxScore !== minScore;
+      const isWorst = score === minScore && maxScore !== minScore;
+      const cellCls = isBest ? 'best-cell' : isWorst ? 'worst-cell' : '';
+      const pct = score/5*100;
+      const c = EMP_COLORS[i % EMP_COLORS.length];
+      return `<td class="td-score ${cellCls}">
+        <span class="spark" style="width:${pct*0.4}px;background:${c.hex};opacity:.5"></span>
+        <span class="${cls}">${score}</span>
+      </td>`;
+    }).join('');
+
+    const diffCell = diff !== null
+      ? `<td style="text-align:center;font-size:12px;font-family:'JetBrains Mono',monospace;color:${diff>=2?'var(--danger)':diff>=1?'#d97706':'var(--success)'};font-weight:600;">${diff.toFixed(1)}</td>`
+      : '<td style="text-align:center;color:var(--text3)">—</td>';
+
+    html += `<tr><td class="td-comp">${COMP_NAMES[id]}</td>${cells}${diffCell}</tr>`;
+  });
+
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+// ============================================================
+// AI ANALYSIS
+// ============================================================
+async function generateAI() {
+  const btn = document.getElementById('btnAI');
+  const content = document.getElementById('aiContent');
+
+  btn.disabled = true;
+  btn.textContent = 'Генерується...';
+  content.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div>Аналізую та порівнюю компетенції...</div>';
+
+  // Build comparison summary for prompt
+  const compSummary = COMP_ORDER.map(id => {
+    const scores = selectedEmployees.map(emp => {
+      const s = comparisonData[emp]?.competencies?.[id]?.overall;
+      return s ? `${emp}: ${s}` : null;
+    }).filter(Boolean).join(', ');
+    return `- ${COMP_NAMES[id]}: ${scores}`;
+  }).join('\n');
+
+  const avgSummary = selectedEmployees.map(emp => {
+    const data = comparisonData[emp];
+    const scores = COMP_ORDER.map(id => data?.competencies?.[id]?.overall).filter(s=>s);
+    const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : 'н/д';
+    return `${emp}: ${avg}/5`;
+  }).join(', ');
+
+  const prompt = `Ти — HR-аналітик. Порівняй результати оцінки 360° для групи співробітників українською мовою. НЕ використовуй markdown таблиці.
+
+ЗАГАЛЬНІ СЕРЕДНІ: ${avgSummary}
+
+БАЛИ ПО КОМПЕТЕНЦІЯХ (шкала 1-5):
+${compSummary}
+
+Надай структурований аналіз:
+
+## 🏆 Загальна картина
+2-3 речення про групу в цілому.
+
+## 🥇 Лідери по компетенціях
+Хто найсильніший в яких компетенціях і чому це важливо.
+
+## 📊 Ключові розбіжності
+Де найбільші відмінності між співробітниками і що це означає для команди.
+
+## 🎯 Рекомендації
+3-5 конкретних кроків для розвитку команди з урахуванням індивідуальних сильних сторін.`;
+
+  try {
+    // Використовуємо той самий Apps Script endpoint
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=compareAI&employees=${encodeURIComponent(selectedEmployees.join(','))}&prompt=${encodeURIComponent(prompt)}`);
+    const result = await res.json();
+
+    if (result.status === 'error') throw new Error(result.message);
+
+    content.innerHTML = `<div class="ai-result">${formatAIText(result.summary || '')}</div>`;
+    btn.textContent = '🔄 Оновити аналіз';
+    btn.disabled = false;
+    document.getElementById('btnPDF').style.display = 'flex';
+
+  } catch(err) {
+    content.innerHTML = `<div class="ai-error">Помилка генерації: ${err.message}</div>`;
+    btn.textContent = '✨ Спробувати знову';
+    btn.disabled = false;
+  }
+}
+
+// ============================================================
+// FORMAT AI TEXT
+// ============================================================
+function formatAIText(raw) {
+  const sectionDefs = [
+    { re:/## 🏆/, cls:'overall', icon:'🏆' },
+    { re:/## 🥇/, cls:'leaders', icon:'🥇' },
+    { re:/## 📊/, cls:'gaps',    icon:'📊' },
+    { re:/## 🎯/, cls:'recs',    icon:'🎯' },
+  ];
+  const lines = raw.split('\n');
+  let html = '', inSection = false, inList = false;
+
+  const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+  const closeSection = () => { closeList(); if (inSection) { html += '</div></div>'; inSection = false; } };
+
+  lines.forEach(line => {
+    const secDef = sectionDefs.find(s => s.re.test(line));
+    if (secDef) {
+      closeSection();
+      const title = line.replace(/^## [^\s]+ /, '').trim();
+      html += `<div class="ai-section"><div class="ai-section-title ${secDef.cls}"><span class="icon">${secDef.icon}</span>${title}</div><div class="ai-text">`;
+      inSection = true; return;
+    }
+    if (line.startsWith('### ')) { closeList(); html += `<p><strong>${renderInline(line.slice(4))}</strong></p>`; return; }
+    if (line.match(/^[\-\*] /)) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += `<li>${renderInline(line.slice(2))}</li>`; return;
+    }
+    if (line.match(/^\d+\. /)) { closeList(); html += `<p style="margin-bottom:6px">${renderInline(line)}</p>`; return; }
+    if (!line.trim()) { closeList(); return; }
+    closeList();
+    html += `<p>${renderInline(line)}</p>`;
+  });
+  closeSection();
+  return html;
+}
+
+function renderInline(text) {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+
+// ============================================================
+// PDF EXPORT
+// ============================================================
+function exportPDF() {
+  const canvas = document.getElementById('radarChart');
+  if (canvas && radarInstance) {
+    const img = document.getElementById('radarPrintImg');
+    img.src = canvas.toDataURL('image/png', 1.0);
+    const style = document.createElement('style');
+    style.id = 'pdfSwap';
+    style.textContent = '@media print { #radarChart{display:none!important;} #radarPrintImg{display:block!important;} }';
+    document.head.appendChild(style);
+  }
+  document.getElementById('pdfHeader').style.display = 'block';
+  const prev = document.title;
+  document.title = `Порівняння 360° — ${selectedEmployees.join(', ')} — ${new Date().toLocaleDateString('uk-UA')}`;
+  window.print();
+  setTimeout(() => {
+    document.title = prev;
+    document.getElementById('pdfHeader').style.display = 'none';
+    document.getElementById('pdfSwap')?.remove();
+  }, 1000);
+}
+</script>
+</body>
+</html>
