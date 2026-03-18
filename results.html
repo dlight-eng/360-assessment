@@ -541,7 +541,7 @@ function renderResults(data) {
   document.getElementById('btnPDF').style.display = 'none';
 
   const comps = COMP_ORDER.map(id => data.competencies[id]);
-  const roles = ['Керівник','Колега','Підлеглий'].filter(r => data.byRole && data.byRole[r]);
+  const roles = ['Керівник','Колега','Підлеглий','Самооцінка'].filter(r => data.byRole && data.byRole[r]);
 
   // Employee header
   const initials = data.employee.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
