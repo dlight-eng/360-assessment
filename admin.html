@@ -770,7 +770,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLxbkaa_WyMFSRhRwRARY3Yf_BI16jYrBS9Gu28MEgWWSTF-iQC3avoJHwTtH_RZGH0Q/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwIUiaJwbypndfuG0BLwIrs7wZPKFxSnKtrvYUac261jUE1bFGZTN2zv3gFOcZ8IJb6MA/exec';
 
 let employeeCount = 0;
 let respondentCount = 0;
@@ -1168,6 +1168,25 @@ function generate() {
   });
 
   showToast(`✓ Згенеровано ${totalLinks} посилань`);
+
+  // Реєструємо всі посилання в статусах зі статусом "Не почав"
+  const linksToRegister = [];
+  respondents.forEach(resp => {
+    employees.forEach(empName => {
+      linksToRegister.push({
+        employee: empName,
+        respondent: resp.name,
+        role: resp.role
+      });
+    });
+  });
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'registerLinks', links: linksToRegister }),
+    mode: 'no-cors'
+  });
 }
 
 function copyLink(btn, url) {
