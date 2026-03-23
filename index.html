@@ -195,9 +195,9 @@
       </div>
     </div>
 
-    <div class="instr">☑ Відмітьте всі твердження, які відповідають реальній поведінці цього співробітника.</div>
+    <div class="instr">☑ Відмітьте до <strong>3 тверджень</strong>, які найточніше відповідають реальній поведінці цього співробітника.</div>
 
-    <div class="selected-count">Відмічено: <span id="selCount">0</span></div>
+    <div class="selected-count">Відмічено: <span id="selCount">0</span> / 3</div>
     <div class="stmts-list" id="stmtsList"></div>
 
     <div class="cmt-wrap">
@@ -411,7 +411,10 @@ function startSurvey() {
 
 function updateSelCount() {
   const comp = COMPETENCIES[currentStep];
-  document.getElementById('selCount').textContent = answers[comp.id].selected.size;
+  const count = answers[comp.id].selected.size;
+  const el = document.getElementById('selCount');
+  el.textContent = count;
+  el.style.color = count >= 3 ? 'var(--danger)' : 'var(--accent)';
 }
 
 function renderStep() {
@@ -455,6 +458,14 @@ function toggleStmt(compId, key, cardEl) {
     cardEl.classList.remove('selected');
     cardEl.querySelector('.stmt-check').textContent = '';
   } else {
+    if (sel.size >= 3) {
+      // Показуємо підказку
+      const err = document.getElementById('errMsg');
+      err.textContent = 'Можна відмітити максимум 3 твердження на одну компетенцію.';
+      err.style.display = 'block';
+      setTimeout(() => { err.style.display = 'none'; }, 2500);
+      return;
+    }
     sel.add(key);
     cardEl.classList.add('selected');
     cardEl.querySelector('.stmt-check').textContent = '✓';
