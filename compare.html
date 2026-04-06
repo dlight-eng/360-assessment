@@ -233,6 +233,26 @@
       <table class="comp-table" id="compTable"></table>
     </div>
 
+    <!-- Group Strengths & Gaps -->
+    <div class="panel" id="groupInsightsPanel" style="display:none;margin-bottom:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--success);font-family:'JetBrains Mono',monospace;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);"></span>
+            Сильні сторони групи
+          </div>
+          <div id="groupStrengths"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--danger);font-family:'JetBrains Mono',monospace;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--danger);"></span>
+            Точки розвитку групи
+          </div>
+          <div id="groupGaps"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- AI Analysis -->
     <div class="panel" id="aiPanel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
@@ -256,7 +276,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwIUiaJwbypndfuG0BLwIrs7wZPKFxSnKtrvYUac261jUE1bFGZTN2zv3gFOcZ8IJb6MA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPxwTcO65MzwTAIwUSREkJ0r_cxBoSIC1bbVCX2qPh9wOw5zciWosekuaMED2K_0-YpA/exec';
 
 const COMP_ORDER = ['risk','time','digital','strategic','delegation','resilience',
                     'responsibility','engagement','initiative','development'];
@@ -274,6 +294,16 @@ const EMP_COLORS = [
   { border:'rgba(220,38,38,.85)',  bg:'rgba(220,38,38,.12)',  hex:'#dc2626' },
   { border:'rgba(124,58,237,.85)', bg:'rgba(124,58,237,.12)', hex:'#7c3aed' },
   { border:'rgba(217,119,6,.85)',  bg:'rgba(217,119,6,.12)',  hex:'#d97706' },
+  { border:'rgba(236,72,153,.85)', bg:'rgba(236,72,153,.12)', hex:'#ec4899' },
+  { border:'rgba(20,184,166,.85)', bg:'rgba(20,184,166,.12)', hex:'#14b8a6' },
+  { border:'rgba(249,115,22,.85)', bg:'rgba(249,115,22,.12)', hex:'#f97316' },
+  { border:'rgba(99,102,241,.85)', bg:'rgba(99,102,241,.12)', hex:'#6366f1' },
+  { border:'rgba(16,185,129,.85)', bg:'rgba(16,185,129,.12)', hex:'#10b981' },
+  { border:'rgba(239,68,68,.85)',  bg:'rgba(239,68,68,.12)',  hex:'#ef4444' },
+  { border:'rgba(168,85,247,.85)', bg:'rgba(168,85,247,.12)', hex:'#a855f7' },
+  { border:'rgba(59,130,246,.85)', bg:'rgba(59,130,246,.12)', hex:'#3b82f6' },
+  { border:'rgba(234,179,8,.85)',  bg:'rgba(234,179,8,.12)',  hex:'#eab308' },
+  { border:'rgba(13,148,136,.85)', bg:'rgba(13,148,136,.12)', hex:'#0d9488' },
 ];
 
 let selectedEmployees = [];
@@ -307,7 +337,7 @@ function addEmployee() {
   const sel = document.getElementById('empSelect');
   const name = sel.value;
   if (!name) return;
-  if (selectedEmployees.length >= 5) { alert('Максимум 5 співробітників'); return; }
+  if (selectedEmployees.length >= 15) { alert('Максимум 15 співробітників'); return; }
   if (selectedEmployees.includes(name)) return;
   selectedEmployees.push(name);
   renderChips();
@@ -385,6 +415,7 @@ function renderComparison() {
   renderRadar();
   renderAvgBars();
   renderTable();
+  renderGroupInsights();
 
   document.getElementById('compareResults').style.display = 'block';
   window.scrollTo({top: document.getElementById('compareResults').offsetTop - 20, behavior:'smooth'});
@@ -467,6 +498,54 @@ function renderAvgBars() {
 }
 
 // ---- Table ----
+
+// ============================================================
+// GROUP STRENGTHS & GAPS
+// ============================================================
+function renderGroupInsights() {
+  if (!comparisonData || !selectedEmployees.length) return;
+
+  const THRESHOLD_STRONG = 3.8;
+  const THRESHOLD_WEAK = 2.8;
+
+  // Рахуємо середній бал по кожній компетенції для всієї групи
+  const groupAvgs = COMP_ORDER.map(id => {
+    const scores = selectedEmployees
+      .map(emp => comparisonData[emp]?.competencies?.[id]?.overall)
+      .filter(s => s !== null && s !== undefined);
+    const avg = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : null;
+    return { id, name: COMP_NAMES[id], avg: avg ? Math.round(avg*10)/10 : null };
+  }).filter(c => c.avg !== null);
+
+  const sorted = [...groupAvgs].sort((a,b) => b.avg - a.avg);
+  const strengths = sorted.filter(c => c.avg >= THRESHOLD_STRONG).slice(0, 4);
+  const gaps = sorted.filter(c => c.avg <= THRESHOLD_WEAK).slice(-4).reverse();
+
+  const barHtml = (item, color) => {
+    const pct = item.avg / 5 * 100;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <div style="font-size:13px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</div>
+      <div style="width:80px;height:7px;background:var(--surface2);border-radius:100px;overflow:hidden;flex-shrink:0;">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:100px;"></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:${color};width:28px;text-align:right;flex-shrink:0;">${item.avg}</div>
+    </div>`;
+  };
+
+  const strengthsEl = document.getElementById('groupStrengths');
+  const gapsEl = document.getElementById('groupGaps');
+
+  strengthsEl.innerHTML = strengths.length
+    ? strengths.map(c => barHtml(c, 'var(--success)')).join('')
+    : '<div style="font-size:13px;color:var(--text3);">Немає компетенцій вище 3.8</div>';
+
+  gapsEl.innerHTML = gaps.length
+    ? gaps.map(c => barHtml(c, 'var(--danger)')).join('')
+    : '<div style="font-size:13px;color:var(--text3);">Немає компетенцій нижче 2.8</div>';
+
+  document.getElementById('groupInsightsPanel').style.display = 'block';
+}
+
 function renderTable() {
   const table = document.getElementById('compTable');
 
