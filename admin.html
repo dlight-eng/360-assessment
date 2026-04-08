@@ -522,6 +522,55 @@
     font-size: 16px; transition: all .15s;
   }
   .dir-del:hover { background: rgba(220,38,38,.1); color: var(--danger); }
+
+  /* Custom people picker */
+  .people-picker { position:relative; }
+  .picker-btn {
+    display:flex;align-items:center;gap:10px;width:100%;
+    padding:8px 12px;background:var(--surface2);border:1px solid var(--border);
+    border-radius:8px;cursor:pointer;font-family:'Geologica',sans-serif;
+    font-size:14px;color:var(--text);text-align:left;transition:border-color .2s;
+  }
+  .picker-btn:hover, .picker-btn.open { border-color:var(--accent); }
+  .picker-avatar-sm {
+    width:28px;height:28px;border-radius:6px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;overflow:hidden;
+  }
+  .picker-avatar-sm img { width:100%;height:100%;object-fit:cover; }
+  .picker-text { flex:1;min-width:0; }
+  .picker-text .pname { font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .picker-text .ppos { font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .picker-arrow { font-size:10px;color:var(--text3);flex-shrink:0; }
+  .picker-dropdown {
+    position:absolute;top:calc(100% + 4px);left:0;right:0;
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;
+    max-height:280px;overflow-y:auto;display:none;
+  }
+  .picker-dropdown.open { display:block; }
+  .picker-search {
+    padding:10px 12px;border-bottom:1px solid var(--border);
+    position:sticky;top:0;background:var(--surface);
+  }
+  .picker-search input {
+    width:100%;padding:7px 10px;background:var(--surface2);
+    border:1px solid var(--border);border-radius:7px;
+    font-family:'Geologica',sans-serif;font-size:13px;color:var(--text);outline:none;
+  }
+  .picker-option {
+    display:flex;align-items:center;gap:10px;padding:9px 12px;
+    cursor:pointer;transition:background .1s;
+  }
+  .picker-option:hover { background:var(--surface2); }
+  .picker-option.selected { background:rgba(37,99,235,.06); }
+  .picker-clear {
+    padding:8px 12px;border-top:1px solid var(--border);
+    font-size:12px;color:var(--text3);cursor:pointer;text-align:center;
+  }
+  .picker-clear:hover { color:var(--danger);background:var(--surface2); }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
@@ -1024,13 +1073,118 @@ function renderDirectory() {
 
 
 function updateDropdowns() {
-  // Update all select dropdowns in employee and respondent lists
-  document.querySelectorAll('.people-select').forEach(sel => {
-    const current = sel.value;
-    sel.innerHTML = '<option value="">— Оберіть —</option>' +
-      peopleList.map(n => `<option value="${n}" ${n===current?'selected':''}>${n}</option>`).join('');
+  // Rebuild all custom pickers
+  document.querySelectorAll('.people-picker').forEach(picker => {
+    const current = picker.dataset.value || '';
+    buildPickerOptions(picker, current);
+    updatePickerDisplay(picker, current);
   });
 }
+
+function getBitrixData() {
+  try { return JSON.parse(localStorage.getItem('360_bitrix_people') || '{}'); } catch(e) { return {}; }
+}
+
+function personAvatarHtml(name, size=28) {
+  const bd = getBitrixData();
+  const extra = bd[name] || {};
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  if (extra.photo) {
+    return `<div class="picker-avatar-sm" style="width:${size}px;height:${size}px;"><img src="${extra.photo}" onerror="this.parentNode.innerHTML='${initials}'"></div>`;
+  }
+  return `<div class="picker-avatar-sm" style="width:${size}px;height:${size}px;">${initials}</div>`;
+}
+
+function buildPickerOptions(picker, selected) {
+  const bd = getBitrixData();
+  const dropdown = picker.querySelector('.picker-dropdown');
+  const optionsContainer = picker.querySelector('.picker-options');
+  optionsContainer.innerHTML = peopleList.map(name => {
+    const extra = bd[name] || {};
+    const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const avatarHtml = extra.photo
+      ? `<div class="picker-avatar-sm"><img src="${extra.photo}" onerror="this.parentNode.innerHTML='${initials}'"></div>`
+      : `<div class="picker-avatar-sm">${initials}</div>`;
+    const isSel = name === selected;
+    return `<div class="picker-option ${isSel?'selected':''}" onclick="selectPicker(this, '${name.replace(/'/g,"\'")}')">
+      ${avatarHtml}
+      <div class="picker-text">
+        <div class="pname">${name}</div>
+        ${extra.position ? `<div class="ppos">${extra.position}</div>` : ''}
+      </div>
+      ${isSel ? '<span style="color:var(--accent);font-size:14px;">✓</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function updatePickerDisplay(picker, name) {
+  const btn = picker.querySelector('.picker-btn');
+  if (!name) {
+    btn.innerHTML = `<div style="color:var(--text3);font-size:13px;">— Оберіть —</div><span class="picker-arrow">▾</span>`;
+    picker.dataset.value = '';
+    return;
+  }
+  const bd = getBitrixData();
+  const extra = bd[name] || {};
+  const avatarHtml = personAvatarHtml(name);
+  btn.innerHTML = `${avatarHtml}
+    <div class="picker-text">
+      <div class="pname">${name}</div>
+      ${extra.position ? `<div class="ppos">${extra.position}</div>` : ''}
+    </div>
+    <span class="picker-arrow">▾</span>`;
+  picker.dataset.value = name;
+}
+
+function selectPicker(optionEl, name) {
+  const picker = optionEl.closest('.people-picker');
+  picker.dataset.value = name;
+  updatePickerDisplay(picker, name);
+  closePicker(picker);
+}
+
+function togglePicker(btn) {
+  const picker = btn.closest('.people-picker');
+  const dropdown = picker.querySelector('.picker-dropdown');
+  const isOpen = dropdown.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.picker-dropdown.open').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.picker-btn.open').forEach(b => b.classList.remove('open'));
+  if (!isOpen) {
+    dropdown.classList.add('open');
+    btn.classList.add('open');
+    buildPickerOptions(picker, picker.dataset.value || '');
+    const search = dropdown.querySelector('.picker-search input');
+    if (search) { search.value = ''; search.focus(); filterPicker(search); }
+  }
+}
+
+function closePicker(picker) {
+  picker.querySelector('.picker-dropdown').classList.remove('open');
+  picker.querySelector('.picker-btn').classList.remove('open');
+}
+
+function filterPicker(input) {
+  const picker = input.closest('.people-picker');
+  const q = input.value.toLowerCase();
+  picker.querySelectorAll('.picker-option').forEach(opt => {
+    const name = opt.querySelector('.pname')?.textContent.toLowerCase() || '';
+    opt.style.display = name.includes(q) ? '' : 'none';
+  });
+}
+
+function clearPicker(picker) {
+  picker.dataset.value = '';
+  updatePickerDisplay(picker, '');
+}
+
+// Close on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.people-picker')) {
+    document.querySelectorAll('.picker-dropdown.open').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.picker-btn.open').forEach(b => b.classList.remove('open'));
+  }
+});
 
 async function addPersonToDirectory() {
   const input = document.getElementById('newPersonInput');
@@ -1086,16 +1240,20 @@ function addEmployee() {
   const row = document.createElement('div');
   row.className = 'emp-row';
   row.id = `emp_${id}`;
-  row.style.gridTemplateColumns = '1fr auto';
-  row.innerHTML = `
-    <select id="emp_name_${id}" class="people-select" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-family:'Geologica',sans-serif;font-size:13px;color:var(--text);outline:none;">
-      <option value="">— Оберіть —</option>
-      ${peopleList.map(n=>`<option value="${n}">${n}</option>`).join('')}
-    </select>
-    <button class="emp-del" onclick="removeEmployee(${id})" title="Видалити">×</button>`;
+  row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);';
+  row.innerHTML = `<div class="people-picker" id="picker_emp_${id}" data-value="" style="flex:1;">
+      <button type="button" class="picker-btn" onclick="togglePicker(this)">
+        <div style="color:var(--text3);font-size:13px;">— Оберіть —</div><span class="picker-arrow">&#9660;</span>
+      </button>
+      <div class="picker-dropdown">
+        <div class="picker-search"><input type="text" placeholder="Пошук..." oninput="filterPicker(this)"></div>
+        <div class="picker-options"></div>
+        <div class="picker-clear" onclick="clearPicker(this.closest('.people-picker'))">&#x2715; Очистити</div>
+      </div>
+    </div>
+    <button class="emp-del" onclick="removeEmployee(${id})" title="Видалити">&#x00D7;</button>`;
   list.appendChild(row);
 }
-
 function removeEmployee(id) {
   document.getElementById(`emp_${id}`)?.remove();
 }
@@ -1112,11 +1270,17 @@ function addRespondent() {
   row.id = `resp_${id}`;
   row.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-      <select id="resp_name_${id}" class="people-select" style="flex:1;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;">
-        <option value="">— Оберіть прізвище —</option>
-        ${peopleList.map(n=>`<option value="${n}">${n}</option>`).join('')}
-      </select>
-      <button class="emp-del" onclick="removeRespondent(${id})" title="Видалити" style="flex-shrink:0">×</button>
+      <div class="people-picker" id="picker_resp_${id}" data-value="" style="flex:1;">
+        <button type="button" class="picker-btn" onclick="togglePicker(this)">
+          <div style="color:var(--text3);font-size:13px;">— Оберіть прізвище —</div><span class="picker-arrow">&#9660;</span>
+        </button>
+        <div class="picker-dropdown">
+          <div class="picker-search"><input type="text" placeholder="Пошук..." oninput="filterPicker(this)"></div>
+          <div class="picker-options"></div>
+          <div class="picker-clear" onclick="clearPicker(this.closest('.people-picker'))">&#x2715; Очистити</div>
+        </div>
+      </div>
+      <button class="emp-del" onclick="removeRespondent(${id})" title="Видалити" style="flex-shrink:0">&#x00D7;</button>
     </div>
     <select id="resp_role_${id}" style="width:100%;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:13px;color:var(--text2);outline:none;">
       <option value="colleague">Колега</option>
@@ -1126,7 +1290,6 @@ function addRespondent() {
     </select>`;
   list.appendChild(row);
 }
-
 function removeRespondent(id) {
   document.getElementById(`resp_${id}`)?.remove();
 }
@@ -1143,7 +1306,8 @@ function getEmployees() {
   const result = [];
   document.querySelectorAll('.emp-row[id^="emp_"]').forEach(row => {
     const id = row.id.replace('emp_', '');
-    const val = document.getElementById(`emp_name_${id}`)?.value.trim();
+    const picker = document.getElementById(`picker_emp_${id}`);
+    const val = picker?.dataset.value?.trim();
     if (val) result.push(val);
   });
   return [...new Set(result)];
@@ -1151,9 +1315,10 @@ function getEmployees() {
 
 function getRespondents() {
   const result = [];
-  document.querySelectorAll('[id^="resp_"]:not([id^="resp_name"]):not([id^="resp_role"])').forEach(row => {
+  document.querySelectorAll('.resp-row[id^="resp_"]').forEach(row => {
     const id = row.id.replace('resp_', '');
-    const name = document.getElementById(`resp_name_${id}`)?.value.trim();
+    const picker = document.getElementById(`picker_resp_${id}`);
+    const name = picker?.dataset.value?.trim();
     const role = document.getElementById(`resp_role_${id}`)?.value || 'colleague';
     if (name) result.push({ name, role });
   });
