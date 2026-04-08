@@ -963,18 +963,35 @@ async function loadPeople() {
 function renderDirectory() {
   const el = document.getElementById('directoryList');
   if (!peopleList.length) {
-    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px;"><div style="font-size:28px;margin-bottom:8px;">👥</div>Список порожній. Додайте першого співробітника.</div>';
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px;"><div style="font-size:28px;margin-bottom:8px;">\u{1F465}</div>Список порожній. Додайте першого співробітника.</div>';
     return;
   }
+
+  // Підтягуємо дані Bitrix (фото, посада)
+  let bitrixData = {};
+  try { bitrixData = JSON.parse(localStorage.getItem('360_bitrix_people') || '{}'); } catch(e) {}
+
   el.innerHTML = peopleList.map(name => {
     const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const extra = bitrixData[name] || {};
+    const position = extra.position || '';
+    const photoUrl = extra.photo || '';
+
+    const avatarHtml = photoUrl
+      ? `<img src="${photoUrl}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=dir-avatar>${initials}</div>')">`
+      : `<div class="dir-avatar">${initials}</div>`;
+
     return `<div class="dir-item">
-      <div class="dir-avatar">${initials}</div>
-      <div class="dir-name">${name}</div>
-      <button class="dir-del" onclick="deletePersonFromDirectory('${name.replace(/'/g,"\\'")}')">×</button>
+      ${avatarHtml}
+      <div style="flex:1;min-width:0;">
+        <div class="dir-name">${name}</div>
+        ${position ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${position}</div>` : ''}
+      </div>
+      <button class="dir-del" onclick="deletePersonFromDirectory('${name.replace(/'/g,"\\'")}')">\u00d7</button>
     </div>`;
   }).join('');
 }
+
 
 function updateDropdowns() {
   // Update all select dropdowns in employee and respondent lists
@@ -1540,7 +1557,7 @@ async function importFromBitrix() {
 
     // Bitrix24 повертає по 50 записів — завантажуємо всі сторінки
     while (true) {
-      const url = `${webhook}/user.get?ACTIVE=Y&start=${start}&select[]=NAME&select[]=LAST_NAME&select[]=SECOND_NAME&select[]=ACTIVE`;
+      const url = `${webhook}/user.get?ACTIVE=Y&start=${start}&select[]=NAME&select[]=LAST_NAME&select[]=WORK_POSITION&select[]=PERSONAL_PHOTO&select[]=ACTIVE`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -1558,41 +1575,46 @@ async function importFromBitrix() {
 
     if (!allUsers.length) throw new Error('Список користувачів порожній');
 
-    // Формуємо імена у форматі "Прізвище Ім'я"
-    const names = allUsers
+    // Формуємо дані співробітників
+    const users = allUsers
       .filter(u => u.ACTIVE)
-      .map(u => {
-        const last = (u.LAST_NAME || '').trim();
-        const first = (u.NAME || '').trim();
-        return [last, first].filter(Boolean).join(' ');
-      })
-      .filter(Boolean)
-      .sort();
+      .map(u => ({
+        name: [u.LAST_NAME || '', u.NAME || ''].filter(Boolean).join(' ').trim(),
+        position: (u.WORK_POSITION || '').trim(),
+        photo: u.PERSONAL_PHOTO || ''
+      }))
+      .filter(u => u.name)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Зберігаємо в localStorage для відображення фото і посад
+    const bitrixPeopleData = {};
+    users.forEach(u => { bitrixPeopleData[u.name] = { position: u.position, photo: u.photo }; });
+    localStorage.setItem('360_bitrix_people', JSON.stringify(bitrixPeopleData));
 
     // Додаємо тих кого ще немає в списку
     const existing = new Set(peopleList);
-    const toAdd = names.filter(n => !existing.has(n));
+    const toAdd = users.filter(u => !existing.has(u.name));
 
     if (!toAdd.length) {
       statusEl.style.color = 'var(--success)';
-      statusEl.textContent = `✓ Всі ${names.length} співробітників вже є в довіднику`;
+      statusEl.textContent = `✓ Всі ${users.length} співробітників вже є в довіднику`;
       btn.textContent = '⬇ Завантажити';
       btn.disabled = false;
       return;
     }
 
-    // Додаємо в Google Sheets пакетно
+    // Додаємо в Google Sheets
     statusEl.textContent = `Додаємо ${toAdd.length} нових співробітників...`;
     let added = 0;
 
-    for (const name of toAdd) {
+    for (const u of toAdd) {
       await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'addPerson', name }),
+        body: JSON.stringify({ action: 'addPerson', name: u.name }),
         mode: 'no-cors'
       });
-      peopleList.push(name);
+      peopleList.push(u.name);
       added++;
     }
 
@@ -1601,7 +1623,7 @@ async function importFromBitrix() {
     updateDropdowns();
 
     statusEl.style.color = 'var(--success)';
-    statusEl.textContent = `✓ Імпортовано ${added} нових співробітників з ${names.length} активних у Bitrix24`;
+    statusEl.textContent = `✓ Імпортовано ${added} нових співробітників з ${users.length} активних у Bitrix24`;
     showToast(`✓ Додано ${added} співробітників з Bitrix24`);
 
   } catch(err) {
