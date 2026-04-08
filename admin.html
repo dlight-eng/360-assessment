@@ -523,6 +523,7 @@
   }
   .dir-del:hover { background: rgba(220,38,38,.1); color: var(--danger); }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -782,6 +783,34 @@
     </div>
   </div>
 
+<!-- Profile Modal -->
+<div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.25);">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:16px;padding:24px 28px;border-bottom:1px solid var(--border);">
+      <div id="profileAvatar" style="width:56px;height:56px;border-radius:12px;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;"></div>
+      <div style="flex:1;">
+        <div id="profileName" style="font-size:18px;font-weight:700;"></div>
+        <div id="profilePosition" style="font-size:13px;color:var(--text2);margin-top:3px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <a id="profileResultsLink" href="#" style="padding:7px 16px;background:var(--accent);color:#fff;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">📊 Повний звіт</a>
+        <button onclick="closeProfileModal()" style="width:32px;height:32px;border:none;background:var(--surface2);border-radius:8px;cursor:pointer;font-size:18px;color:var(--text2);">×</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div id="profileContent" style="padding:24px 28px;">
+      <div style="text-align:center;padding:40px;color:var(--text3);">
+        <div style="font-size:32px;margin-bottom:12px;">⏳</div>
+        Завантаження даних...
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -981,13 +1010,14 @@ function renderDirectory() {
       ? `<img src="${photoUrl}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=dir-avatar>${initials}</div>')">`
       : `<div class="dir-avatar">${initials}</div>`;
 
-    return `<div class="dir-item">
+    const safeName = name.replace(/'/g, "\\'");
+    return `<div class="dir-item" style="cursor:pointer;" onclick="openProfileModal('${safeName}')" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
       ${avatarHtml}
       <div style="flex:1;min-width:0;">
-        <div class="dir-name">${name}</div>
+        <div class="dir-name" style="color:var(--accent);text-decoration:none;">${name}</div>
         ${position ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${position}</div>` : ''}
       </div>
-      <button class="dir-del" onclick="deletePersonFromDirectory('${name.replace(/'/g,"\\'")}')">\u00d7</button>
+      <button class="dir-del" onclick="event.stopPropagation();deletePersonFromDirectory('${safeName}')">\u00d7</button>
     </div>`;
   }).join('');
 }
@@ -1654,3 +1684,130 @@ function showToast(msg) {
 </script>
 </body>
 </html>
+<script>
+// ============================================================
+// PROFILE MODAL
+// ============================================================
+const COMP_ORDER_P = ['risk','time','digital','strategic','delegation','resilience','responsibility','engagement','initiative','development'];
+const COMP_NAMES_P = {
+  risk:'Упр. ризиками', time:'Упр. часом', digital:'Цифрова компет.', strategic:'Стратег. мислення',
+  delegation:'Делегування', resilience:'Особиста стійкість', responsibility:'Відповідальність',
+  engagement:'Залученість', initiative:'Ініціативність', development:'Розвиток'
+};
+let profileChartInstance = null;
+
+async function openProfileModal(name) {
+  const modal = document.getElementById('profileModal');
+  const contentEl = document.getElementById('profileContent');
+  const nameEl = document.getElementById('profileName');
+  const posEl = document.getElementById('profilePosition');
+  const avatarEl = document.getElementById('profileAvatar');
+  const linkEl = document.getElementById('profileResultsLink');
+
+  nameEl.textContent = name;
+  linkEl.href = `results.html`;
+
+  let bitrixData = {};
+  try { bitrixData = JSON.parse(localStorage.getItem('360_bitrix_people') || '{}'); } catch(e) {}
+  const extra = bitrixData[name] || {};
+  posEl.textContent = extra.position || '';
+
+  if (extra.photo) {
+    avatarEl.innerHTML = `<img src="${extra.photo}" style="width:100%;height:100%;object-fit:cover;">`;
+    avatarEl.style.background = 'none';
+  } else {
+    const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    avatarEl.innerHTML = initials;
+    avatarEl.style.background = 'linear-gradient(135deg,var(--accent),var(--accent2))';
+  }
+
+  contentEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:32px;margin-bottom:12px;">⏳</div>Завантаження...</div>';
+  modal.style.display = 'flex';
+
+  if (profileChartInstance) { profileChartInstance.destroy(); profileChartInstance = null; }
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=results&employee=${encodeURIComponent(name)}`);
+    const data = await res.json();
+    if (!data || !data.competencies) {
+      contentEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Немає даних оцінки</div>';
+      return;
+    }
+    renderProfileContent(data);
+  } catch(err) {
+    contentEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);">Помилка: ${err.message}</div>`;
+  }
+}
+
+function renderProfileContent(data) {
+  const contentEl = document.getElementById('profileContent');
+  const ROLE_COL = { 'Керівник':'#d97706','Колега':'#2563eb','Підлеглий':'#059669','Самооцінка':'#7c3aed' };
+
+  const comps = COMP_ORDER_P.map(id => data.competencies[id]);
+  const allScores = comps.map(c=>c.overall).filter(Boolean);
+  const overall = allScores.length ? (allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1) : '—';
+
+  const pills = Object.entries(data.byRole||{}).map(([role,cnt]) => {
+    const col = ROLE_COL[role]||'#9ca3af';
+    return `<span style="padding:4px 12px;border-radius:100px;font-size:12px;font-weight:600;background:${col}22;color:${col}">${role}: ${cnt}</span>`;
+  }).join('');
+
+  const barsHtml = comps.map(c => {
+    if (!c.overall) return '';
+    const pct = c.overall/5*100;
+    const col = c.overall>=4?'#059669':c.overall>=3?'#2563eb':c.overall>=2?'#d97706':'#dc2626';
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
+      <div style="font-size:12px;color:var(--text2);width:130px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</div>
+      <div style="flex:1;height:7px;background:var(--surface2);border-radius:100px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${col};border-radius:100px;"></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${col};width:26px;text-align:right;">${c.overall}</div>
+    </div>`;
+  }).join('');
+
+  contentEl.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${pills}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--accent);">${overall}<span style="font-size:12px;color:var(--text3);font-weight:400;">/5</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start;">
+      <div style="position:relative;height:200px;">
+        <canvas id="profileRadar"></canvas>
+      </div>
+      <div>${barsHtml}</div>
+    </div>`;
+
+  // Radar chart
+  const labels = COMP_ORDER_P.map(id => COMP_NAMES_P[id]);
+  const scores = COMP_ORDER_P.map(id => data.competencies[id]?.overall ?? 0);
+  const ctx = document.getElementById('profileRadar').getContext('2d');
+  profileChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        data: scores,
+        backgroundColor: 'rgba(37,99,235,.12)',
+        borderColor: 'rgba(37,99,235,.8)',
+        borderWidth: 2,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { min:0, max:5, ticks:{ stepSize:1, font:{size:8}, backdropColor:'transparent' }, grid:{color:'#dde3f0'}, angleLines:{color:'#dde3f0'}, pointLabels:{font:{size:8}} } },
+      plugins: { legend:{ display:false } }
+    }
+  });
+}
+
+function closeProfileModal() {
+  document.getElementById('profileModal').style.display = 'none';
+  if (profileChartInstance) { profileChartInstance.destroy(); profileChartInstance = null; }
+}
+
+window.addEventListener('click', e => {
+  const modal = document.getElementById('profileModal');
+  if (modal && e.target === modal) closeProfileModal();
+});
+</script>
