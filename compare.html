@@ -272,11 +272,37 @@
       </div>
     </div>
 
+    <!-- Group IDP Panel -->
+    <div class="panel" id="groupIdpPanel" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="panel-title" style="margin-bottom:4px">Груповий ІПР</div>
+          <div style="font-size:13px;color:var(--text2);">Командний план розвитку на основі порівняльного аналізу</div>
+        </div>
+        <div style="display:flex;gap:8px;" class="pdf-hide">
+          <button id="btnGroupIDP" onclick="generateGroupIDP()" class="btn-ai" style="background:linear-gradient(135deg,#059669,#0d9488);">📋 Згенерувати груповий ІПР</button>
+        </div>
+      </div>
+      <div id="groupIdpContent">
+        <div style="text-align:center;padding:24px;color:var(--text3);font-size:14px;">
+          Спочатку згенеруйте AI-аналіз, потім натисніть «Згенерувати груповий ІПР»
+        </div>
+      </div>
+      <div id="groupIdpEditor" style="display:none;margin-top:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Редагуйте план нижче:</div>
+        <textarea id="groupIdpTextarea" style="width:100%;min-height:400px;padding:16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);line-height:1.7;outline:none;resize:vertical;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+          <button onclick="saveGroupIDP()" style="padding:8px 20px;background:var(--success);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;">💾 Зберегти</button>
+        </div>
+        <div id="groupIdpSaveMsg" style="display:none;margin-top:8px;font-size:13px;color:var(--success);text-align:right;">✓ ІПР збережено</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxnsbmcIACPySZaNyOn5bbAYL_xEDVVfJMmIyKsbUxlFM-VJQWLe2peq3LC2L5a3mrw7Q/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHyGgyVXN7OZ7CD70i9rIOH-orN1fKNEMZiRcEKEemuZm-dNmYCxyRVpCH9VMibftKGg/exec';
 
 const COMP_ORDER = ['risk','time','digital','strategic','delegation','resilience',
                     'responsibility','engagement','initiative','development'];
@@ -411,6 +437,9 @@ function renderComparison() {
   document.getElementById('btnAI').disabled = false;
   document.getElementById('btnAI').textContent = '✨ Згенерувати аналіз';
   document.getElementById('btnPDF').style.display = 'none';
+  document.getElementById('groupIdpPanel').style.display = 'none';
+  document.getElementById('groupIdpContent').innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);font-size:14px;">Спочатку згенеруйте AI-аналіз, потім натисніть «Згенерувати груповий ІПР»</div>';
+  document.getElementById('groupIdpEditor').style.display = 'none';
 
   renderRadar();
   renderAvgBars();
@@ -609,6 +638,9 @@ async function generateAI() {
     btn.textContent = '🔄 Оновити аналіз';
     btn.disabled = false;
     document.getElementById('btnPDF').style.display = 'flex';
+    document.getElementById('groupIdpPanel').style.display = 'block';
+    document.getElementById('btnGroupIDP').disabled = false;
+    document.getElementById('btnGroupIDP').textContent = '📋 Згенерувати груповий ІПР';
 
   } catch(err) {
     content.innerHTML = `<div class="ai-error">Помилка генерації: ${err.message}</div>`;
@@ -687,3 +719,47 @@ function exportPDF() {
 </script>
 </body>
 </html>
+<script>
+// ============================================================
+// GROUP IDP
+// ============================================================
+async function generateGroupIDP() {
+  const btn = document.getElementById('btnGroupIDP');
+  const contentEl = document.getElementById('groupIdpContent');
+  const editorEl = document.getElementById('groupIdpEditor');
+
+  btn.disabled = true;
+  btn.textContent = 'Генерується...';
+  contentEl.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div>Складаю груповий план розвитку...</div>';
+  editorEl.style.display = 'none';
+
+  try {
+    const params = `action=groupIDP&employees=${encodeURIComponent(selectedEmployees.join(','))}`;
+    const res = await fetch(`${APPS_SCRIPT_URL}?${params}`);
+    const result = await res.json();
+
+    if (result.status === 'error') throw new Error(result.message);
+
+    const text = result.summary || '';
+    contentEl.innerHTML = `<div class="ai-result">${formatAIText(text)}</div>`;
+    document.getElementById('groupIdpTextarea').value = text;
+    editorEl.style.display = 'block';
+    btn.textContent = '🔄 Оновити ІПР';
+    btn.disabled = false;
+  } catch(err) {
+    contentEl.innerHTML = `<div class="ai-error">Помилка: ${err.message}</div>`;
+    btn.textContent = '📋 Спробувати знову';
+    btn.disabled = false;
+  }
+}
+
+function saveGroupIDP() {
+  const text = document.getElementById('groupIdpTextarea').value;
+  const key = `group_idp_${selectedEmployees.sort().join('|')}`;
+  localStorage.setItem(key, text);
+  document.getElementById('groupIdpContent').innerHTML = `<div class="ai-result">${formatAIText(text)}</div>`;
+  const msg = document.getElementById('groupIdpSaveMsg');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 3000);
+}
+</script>
