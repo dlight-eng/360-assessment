@@ -302,7 +302,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHyGgyVXN7OZ7CD70i9rIOH-orN1fKNEMZiRcEKEemuZm-dNmYCxyRVpCH9VMibftKGg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvRggZa06vfqVPYBz6_uMn4GGhjkD4zqJitWKyiu28E1loIuWyCvJplyaYqg4ddutwSg/exec';
 
 const COMP_ORDER = ['risk','time','digital','strategic','delegation','resilience',
                     'responsibility','engagement','initiative','development'];
@@ -658,22 +658,58 @@ function formatAIText(raw) {
     { re:/## 🥇/, cls:'leaders', icon:'🥇' },
     { re:/## 📊/, cls:'gaps',    icon:'📊' },
     { re:/## 🎯/, cls:'recs',    icon:'🎯' },
+    { re:/## 📅/, cls:'recs',    icon:'📅' },
+    { re:/## 💡/, cls:'overall', icon:'💡' },
+    { re:/^## [А-ЯІЇЄҐA-Z]/, cls:'overall', icon:'📋' },
+    { re:/## ГРУПОВИЙ/, cls:'overall', icon:'👥' },
+    { re:/## ІНДИВІДУАЛЬНИЙ/, cls:'overall', icon:'📋' },
   ];
   const lines = raw.split('\n');
-  let html = '', inSection = false, inList = false;
+  let html = '', inSection = false, inList = false, inTable = false, tableRows = [];
 
   const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
-  const closeSection = () => { closeList(); if (inSection) { html += '</div></div>'; inSection = false; } };
+  const closeTable = () => {
+    if (inTable && tableRows.length) {
+      let th = '', tbody = '';
+      tableRows.forEach((row, i) => {
+        const cells = row.split('|').map(c => c.trim()).filter(c => c && !c.match(/^[-:]+$/));
+        if (i === 0) {
+          th = cells.map(c => `<th style="padding:10px 12px;text-align:left;font-weight:600;font-size:12px;border-bottom:2px solid var(--border);">${renderInline(c)}</th>`).join('');
+        } else if (!row.match(/^\|?[\s\-:]+\|/)) {
+          tbody += '<tr style="border-bottom:1px solid var(--border);">' +
+            cells.map((c,ci) => `<td style="padding:10px 12px;vertical-align:top;font-size:13px;${ci===1?'min-width:200px;':''}">${renderInline(c)}</td>`).join('') + '</tr>';
+        }
+      });
+      html += `<div style="overflow-x:auto;margin:12px 0"><table style="width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+        <thead><tr style="background:var(--surface2);">${th}</tr></thead>
+        <tbody>${tbody}</tbody>
+      </table></div>`;
+      tableRows = []; inTable = false;
+    }
+  };
+  const closeSection = () => { closeList(); closeTable(); if (inSection) { html += '</div></div>'; inSection = false; } };
 
   lines.forEach(line => {
+    if (line.match(/^\|/)) {
+      closeList();
+      inTable = true;
+      tableRows.push(line);
+      return;
+    }
+    if (inTable && !line.match(/^\|/)) { closeTable(); }
+
     const secDef = sectionDefs.find(s => s.re.test(line));
     if (secDef) {
       closeSection();
-      const title = line.replace(/^## [^\s]+ /, '').trim();
+      const title = line.replace(/^## /, '').trim();
       html += `<div class="ai-section"><div class="ai-section-title ${secDef.cls}"><span class="icon">${secDef.icon}</span>${title}</div><div class="ai-text">`;
       inSection = true; return;
     }
-    if (line.startsWith('### ')) { closeList(); html += `<p><strong>${renderInline(line.slice(4))}</strong></p>`; return; }
+    if (line.startsWith('### ')) {
+      closeList(); closeTable();
+      html += `<div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);">${renderInline(line.slice(4))}</div>`;
+      return;
+    }
     if (line.match(/^[\-\*] /)) {
       if (!inList) { html += '<ul>'; inList = true; }
       html += `<li>${renderInline(line.slice(2))}</li>`; return;
