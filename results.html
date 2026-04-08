@@ -471,7 +471,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHyGgyVXN7OZ7CD70i9rIOH-orN1fKNEMZiRcEKEemuZm-dNmYCxyRVpCH9VMibftKGg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvRggZa06vfqVPYBz6_uMn4GGhjkD4zqJitWKyiu28E1loIuWyCvJplyaYqg4ddutwSg/exec';
 
 const COMP_ORDER = ['risk','time','digital','strategic','delegation','resilience',
                     'responsibility','engagement','initiative','development'];
@@ -862,8 +862,8 @@ function formatAIText(raw) {
           tbody += '<tr>' + cells.map(c => `<td>${renderInline(c)}</td>`).join('') + '</tr>';
         }
       });
-      html += `<div style="overflow-x:auto;margin:10px 0"><table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead style="background:var(--surface2)"><tr>${th}</tr></thead>
+      html += `<div style="overflow-x:auto;margin:12px 0"><table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+        <thead><tr style="background:var(--surface2);">${th}</tr></thead>
         <tbody>${tbody}</tbody>
       </table></div>`;
       tableRows = [];
