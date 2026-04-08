@@ -471,7 +471,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxnsbmcIACPySZaNyOn5bbAYL_xEDVVfJMmIyKsbUxlFM-VJQWLe2peq3LC2L5a3mrw7Q/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHyGgyVXN7OZ7CD70i9rIOH-orN1fKNEMZiRcEKEemuZm-dNmYCxyRVpCH9VMibftKGg/exec';
 
 const COMP_ORDER = ['risk','time','digital','strategic','delegation','resilience',
                     'responsibility','engagement','initiative','development'];
@@ -832,6 +832,9 @@ function formatAIText(raw) {
     { re: /## 📈/, cls: 'growth',    icon: '📈' },
     { re: /## 👥/, cls: 'gaps',      icon: '👥' },
     { re: /## 🎯/, cls: 'recs',      icon: '🎯' },
+    { re: /## 📅/, cls: 'recs',      icon: '📅' },
+    // IDP sections — named competencies
+    { re: /^## [А-ЯІЇЄҐA-Z]/, cls: 'overall', icon: '📋' },
   ];
 
   // Split text into lines
@@ -888,7 +891,7 @@ function formatAIText(raw) {
     // Generic ## header (###)
     if (line.startsWith('### ')) {
       closeList(); closeTable();
-      html += `<p><strong>${renderInline(line.slice(4))}</strong></p>`;
+      html += `<div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);">${renderInline(line.slice(4))}</div>`;
       return;
     }
 
