@@ -750,7 +750,22 @@
     <div style="max-width:480px">
       <div class="panel">
         <div class="panel-title">Довідник співробітників</div>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Список зберігається в Google Sheets (лист «Співробітники»). Використовується при генерації посилань.</p>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Список зберігається в Google Sheets. Додавайте вручну або завантажте з Bitrix24.</p>
+
+        <!-- Bitrix24 import -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">🔗 Імпорт з Bitrix24</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="bitrixWebhook" placeholder="https://company.bitrix24.ua/rest/1/xxxxx/" value="https://bitrix24.dlight.com.ua/rest/5277/ht1lwaf3v8kx7jo9/"
+              style="flex:1;min-width:200px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:13px;color:var(--text);outline:none;"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            <button onclick="importFromBitrix()" id="btnBitrixImport"
+              style="padding:8px 16px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:'Geologica',sans-serif;cursor:pointer;white-space:nowrap;">
+              ⬇ Завантажити
+            </button>
+          </div>
+          <div id="bitrixImportStatus" style="display:none;margin-top:10px;font-size:13px;"></div>
+        </div>
 
         <div style="display:flex;gap:8px;margin-bottom:16px;">
           <input type="text" id="newPersonInput" placeholder="Прізвище Ім'я" style="flex:1;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'Geologica',sans-serif;font-size:14px;color:var(--text);outline:none;" onkeydown="if(event.key==='Enter')addPersonToDirectory()">
@@ -1490,6 +1505,122 @@ async function loadCycles() {
     el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);font-size:13px;">Помилка завантаження</div>';
   }
 }
+
+
+// ============================================================
+// BITRIX24 IMPORT
+// ============================================================
+const BITRIX_WEBHOOK_KEY = '360_bitrix_webhook';
+
+async function importFromBitrix() {
+  const webhookInput = document.getElementById('bitrixWebhook');
+  const statusEl = document.getElementById('bitrixImportStatus');
+  const btn = document.getElementById('btnBitrixImport');
+
+  let webhook = webhookInput.value.trim().replace(/\/$/, '');
+  if (!webhook) {
+    // Спробуємо збережений
+    webhook = localStorage.getItem(BITRIX_WEBHOOK_KEY) || '';
+    if (!webhook) { showToast('⚠ Введіть URL вебхуку Bitrix24'); return; }
+    webhookInput.value = webhook + '/';
+  }
+
+  // Зберігаємо вебхук
+  localStorage.setItem(BITRIX_WEBHOOK_KEY, webhook);
+
+  btn.textContent = '⏳ Завантаження...';
+  btn.disabled = true;
+  statusEl.style.display = 'block';
+  statusEl.style.cssText = 'display:block;margin-top:10px;font-size:13px;color:var(--text2);';
+  statusEl.textContent = 'Підключення до Bitrix24...';
+
+  try {
+    const allUsers = [];
+    let start = 0;
+
+    // Bitrix24 повертає по 50 записів — завантажуємо всі сторінки
+    while (true) {
+      const url = `${webhook}/user.get?ACTIVE=Y&start=${start}&select[]=NAME&select[]=LAST_NAME&select[]=SECOND_NAME&select[]=ACTIVE`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error_description || data.error);
+
+      const users = data.result || [];
+      allUsers.push(...users);
+
+      statusEl.textContent = `Завантажено: ${allUsers.length} з ${data.total}...`;
+
+      if (allUsers.length >= data.total || users.length === 0) break;
+      start += 50;
+    }
+
+    if (!allUsers.length) throw new Error('Список користувачів порожній');
+
+    // Формуємо імена у форматі "Прізвище Ім'я"
+    const names = allUsers
+      .filter(u => u.ACTIVE)
+      .map(u => {
+        const last = (u.LAST_NAME || '').trim();
+        const first = (u.NAME || '').trim();
+        return [last, first].filter(Boolean).join(' ');
+      })
+      .filter(Boolean)
+      .sort();
+
+    // Додаємо тих кого ще немає в списку
+    const existing = new Set(peopleList);
+    const toAdd = names.filter(n => !existing.has(n));
+
+    if (!toAdd.length) {
+      statusEl.style.color = 'var(--success)';
+      statusEl.textContent = `✓ Всі ${names.length} співробітників вже є в довіднику`;
+      btn.textContent = '⬇ Завантажити';
+      btn.disabled = false;
+      return;
+    }
+
+    // Додаємо в Google Sheets пакетно
+    statusEl.textContent = `Додаємо ${toAdd.length} нових співробітників...`;
+    let added = 0;
+
+    for (const name of toAdd) {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'addPerson', name }),
+        mode: 'no-cors'
+      });
+      peopleList.push(name);
+      added++;
+    }
+
+    peopleList.sort();
+    renderDirectory();
+    updateDropdowns();
+
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = `✓ Імпортовано ${added} нових співробітників з ${names.length} активних у Bitrix24`;
+    showToast(`✓ Додано ${added} співробітників з Bitrix24`);
+
+  } catch(err) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = `⚠ Помилка: ${err.message}. Перевірте URL вебхуку та CORS налаштування.`;
+  }
+
+  btn.textContent = '⬇ Завантажити';
+  btn.disabled = false;
+}
+
+// Відновлення збереженого вебхуку
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(BITRIX_WEBHOOK_KEY);
+  if (saved) {
+    const input = document.getElementById('bitrixWebhook');
+    if (input) input.value = saved + '/';
+  }
+});
 
 let toastTimer;
 function showToast(msg) {
