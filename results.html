@@ -783,45 +783,43 @@ async function generateSummary() {
 // PDF EXPORT
 // ============================================================
 function exportPDF() {
-  // Конвертуємо радарну діаграму в PNG перед друком
-  const canvas = document.getElementById('radarChart');
-  if (canvas && radarInstance) {
-    // Зберігаємо canvas як img для коректного друку
-    let img = document.getElementById('radarPrintImg');
-    if (!img) {
-      img = document.createElement('img');
-      img.id = 'radarPrintImg';
-      img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:none;';
-      canvas.parentNode.appendChild(img);
-    }
-    img.src = canvas.toDataURL('image/png', 1.0);
+  // Конвертуємо всі canvas в PNG з білим фоном перед друком
+  const snapshots = [];
 
-    // При друку — показати img, сховати canvas
-    const style = document.createElement('style');
-    style.id = 'printSwapStyle';
-    style.textContent = `
-      @media print {
-        #radarChart { display: none !important; }
-        #radarPrintImg { display: block !important; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
+  document.querySelectorAll('canvas').forEach(canvas => {
+    const offscreen = document.createElement('canvas');
+    offscreen.width = canvas.width;
+    offscreen.height = canvas.height;
+    const ctx = offscreen.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, offscreen.width, offscreen.height);
+    ctx.drawImage(canvas, 0, 0);
 
-  // Назва файлу через document.title
+    const img = document.createElement('img');
+    img.dataset.printImg = '1';
+    img.style.cssText = 'display:none;width:100%;height:100%;object-fit:contain;';
+    img.src = offscreen.toDataURL('image/png', 1.0);
+    canvas.parentNode.insertBefore(img, canvas.nextSibling);
+    snapshots.push(img);
+  });
+
+  const style = document.createElement('style');
+  style.id = 'printSwapStyle';
+  style.textContent = '@media print { canvas { display: none !important; } [data-print-img] { display: block !important; } }';
+  document.head.appendChild(style);
+
   const prevTitle = document.title;
   if (currentData) {
-    document.title = `Звіт 360° — ${currentData.employee} — ${new Date().toLocaleDateString('uk-UA')}`;
+    document.title = 'Звіт 360° — ' + currentData.employee + ' — ' + new Date().toLocaleDateString('uk-UA');
   }
 
   window.print();
 
-  // Відновлюємо після друку
   setTimeout(() => {
     document.title = prevTitle;
-    const s = document.getElementById('printSwapStyle');
-    if (s) s.remove();
-  }, 1000);
+    document.getElementById('printSwapStyle')?.remove();
+    snapshots.forEach(img => img.remove());
+  }, 1500);
 }
 
 function formatAIText(raw) {
